@@ -20,9 +20,9 @@ export function BottomNav() {
         <NavLink
           to="/add"
           aria-label="Añadir movimiento"
-          className="absolute left-1/2 -translate-x-1/2 -top-7 h-16 w-16 rounded-full gradient-primary shadow-fab flex items-center justify-center text-primary-foreground active:scale-95 transition-transform"
+          className="absolute left-1/2 -translate-x-1/2 -top-4 h-14 w-14 rounded-full gradient-primary shadow-fab flex items-center justify-center text-primary-foreground active:scale-95 transition-transform z-10"
         >
-          <Plus className="h-7 w-7" strokeWidth={2.5} />
+          <Plus className="h-6 w-6" strokeWidth={2.5} />
         </NavLink>
 
         <div className="bg-card/95 backdrop-blur-lg border-t border-border px-2 pt-2 pb-3 flex items-center justify-around">
