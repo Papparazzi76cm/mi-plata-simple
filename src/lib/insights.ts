@@ -298,6 +298,85 @@ export function pickRotatingInsight(opts: {
   return candidates[doy % candidates.length];
 }
 
+export interface WeeklySummary {
+  total: number;
+  /** Day-of-week label (es-PY) with the highest spend, e.g. "martes". */
+  topDayLabel: string;
+  topDayAmount: number;
+  /** Top category id + display label/emoji, if any. */
+  topCategoryId: string | null;
+  topCategoryLabel: string | null;
+  topCategoryEmoji: string | null;
+  topCategoryAmount: number;
+  /** True when there is enough data to show the card. */
+  hasData: boolean;
+}
+
+/**
+ * Weekly summary for the last 7 days (today inclusive).
+ * `resolveCategory` returns { id, label, emoji } | null for a given description.
+ */
+export function getWeeklySummary(
+  txs: TxLite[],
+  resolveCategory: (desc: string) => { id: string; label: string; emoji: string } | null,
+): WeeklySummary {
+  const today = startOfDay(new Date());
+  const cutoff = new Date(today);
+  cutoff.setDate(today.getDate() - 6); // 7-day window including today
+  const weekdayFmt = new Intl.DateTimeFormat("es-PY", { weekday: "long" });
+
+  const dayTotals = new Map<string, { label: string; total: number }>();
+  const catTotals = new Map<
+    string,
+    { id: string; label: string; emoji: string; total: number }
+  >();
+  let total = 0;
+
+  for (const t of txs) {
+    if (t.type !== "gasto") continue;
+    const d = startOfDay(new Date(t.date));
+    if (d.getTime() < cutoff.getTime() || d.getTime() > today.getTime()) continue;
+    const amt = Number(t.amount);
+    total += amt;
+    const k = dayKey(d);
+    const cur = dayTotals.get(k);
+    if (cur) cur.total += amt;
+    else dayTotals.set(k, { label: weekdayFmt.format(d), total: amt });
+
+    const cat = resolveCategory(t.description ?? "");
+    if (cat) {
+      const c = catTotals.get(cat.id);
+      if (c) c.total += amt;
+      else catTotals.set(cat.id, { ...cat, total: amt });
+    }
+  }
+
+  let topDayLabel = "—";
+  let topDayAmount = 0;
+  for (const v of dayTotals.values()) {
+    if (v.total > topDayAmount) {
+      topDayAmount = v.total;
+      topDayLabel = v.label;
+    }
+  }
+
+  let topCat: { id: string; label: string; emoji: string; total: number } | null = null;
+  for (const c of catTotals.values()) {
+    if (!topCat || c.total > topCat.total) topCat = c;
+  }
+
+  return {
+    total,
+    topDayLabel,
+    topDayAmount,
+    topCategoryId: topCat?.id ?? null,
+    topCategoryLabel: topCat?.label ?? null,
+    topCategoryEmoji: topCat?.emoji ?? null,
+    topCategoryAmount: topCat?.total ?? 0,
+    hasData: total > 0,
+  };
+}
+
 /** Friendly label for a reminder due date (timezone-safe for YYYY-MM-DD). */
 export function reminderUrgency(dateStr: string): {
   label: string;
