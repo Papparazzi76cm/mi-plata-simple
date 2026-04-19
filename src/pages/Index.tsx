@@ -143,6 +143,18 @@ export default function Index() {
     return { items, other, monthTotal };
   }, [allTx]);
 
+  const rotatingInsight = useMemo(
+    () =>
+      pickRotatingInsight({
+        todayTotal,
+        yesterdayTotal,
+        avg,
+        streak,
+        topCategoryLabel: breakdown.items[0]?.cat.label.toLowerCase(),
+      }),
+    [todayTotal, yesterdayTotal, avg, streak, breakdown.items],
+  );
+
   // Persist 30-day category usage so the Add screen can rank chips by habit.
   useEffect(() => {
     if (allTx.length === 0) return;
