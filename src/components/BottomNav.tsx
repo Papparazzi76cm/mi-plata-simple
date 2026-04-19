@@ -25,17 +25,21 @@ export function BottomNav() {
           <Plus className="h-7 w-7" strokeWidth={2.5} />
         </NavLink>
 
-        <div className="bg-card/95 backdrop-blur-lg border-t border-border px-4 pt-2 pb-3 grid grid-cols-3 items-end">
-          <NavLink to="/" end className={linkClass}>
+        <div className="bg-card/95 backdrop-blur-lg border-t border-border px-2 pt-2 pb-3 flex items-center justify-around">
+          <NavLink to="/" end className={cn(linkClass({ isActive: location.pathname === "/" }), "flex-1 max-w-[80px]")}>
             <Home className="h-5 w-5" strokeWidth={2.2} />
             <span className="text-[10px] font-medium">Inicio</span>
           </NavLink>
-          <div aria-hidden /> {/* spacer for FAB */}
-          <NavLink to="/reminders" className={linkClass}>
+
+          {/* Spacer for FAB */}
+          <div className="w-20 shrink-0" aria-hidden />
+
+          <NavLink to="/reminders" className={cn(linkClass({ isActive: location.pathname === "/reminders" }), "flex-1 max-w-[80px]")}>
             <Bell className="h-5 w-5" strokeWidth={2.2} />
-            <span className="text-[10px] font-medium">Recordatorios</span>
+            <span className="text-[10px] font-medium">Avisos</span>
           </NavLink>
-          <NavLink to="/settings" className={cn(linkClass({ isActive: location.pathname === "/settings" }), "col-span-3 -mt-1")}>
+
+          <NavLink to="/settings" className={cn(linkClass({ isActive: location.pathname === "/settings" }), "flex-1 max-w-[80px]")}>
             <Settings className="h-5 w-5" strokeWidth={2.2} />
             <span className="text-[10px] font-medium">Ajustes</span>
           </NavLink>
