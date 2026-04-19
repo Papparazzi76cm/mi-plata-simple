@@ -43,6 +43,7 @@ export default function Index() {
   const [allTx, setAllTx] = useState<TxLite[]>([]);
   const [recent, setRecent] = useState<Transaction[]>([]);
   const [nextReminder, setNextReminder] = useState<Reminder | null>(null);
+  const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
