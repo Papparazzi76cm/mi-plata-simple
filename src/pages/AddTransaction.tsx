@@ -19,6 +19,21 @@ export default function AddTransaction() {
   const [saving, setSaving] = useState(false);
 
   const parsed = useMemo(() => parseQuickInput(text), [text]);
+  const suggestions = useMemo(() => suggestCategories(parsed.description || text, 4), [parsed.description, text]);
+
+  function applyCategory(cat: Category) {
+    if (hasCategoryEmoji(text, cat)) return;
+    // If the text already mentions a keyword for this category, just prepend the emoji.
+    // Otherwise insert "<emoji> <label>" so the user gets a useful description.
+    const hasKeyword = suggestions.some((s) => s.id === cat.id) && parsed.description.length > 0;
+    const next = hasKeyword
+      ? `${cat.emoji} ${text.trim()}`
+      : text.trim()
+        ? `${text.trim()} ${cat.emoji} ${cat.label.toLowerCase()}`
+        : `${cat.emoji} ${cat.label.toLowerCase()}`;
+    setText(next.slice(0, 140));
+  }
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
