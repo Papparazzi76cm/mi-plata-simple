@@ -9,6 +9,7 @@ import { ArrowLeft, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatGs } from "@/lib/format";
 import { parseQuickInput } from "@/lib/insights";
+import { suggestCategories, hasCategoryEmoji, type Category } from "@/lib/categories";
 
 export default function AddTransaction() {
   const { user } = useAuth();
