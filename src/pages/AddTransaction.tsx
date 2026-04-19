@@ -151,6 +151,36 @@ export default function AddTransaction() {
             </button>
           </div>
 
+          {/* Category suggestions */}
+          {suggestions.length > 0 && (
+            <div className="mb-5 -mx-1">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-2 mb-2">
+                {parsed.description ? "Sugerencias" : "Rápidas"}
+              </p>
+              <div className="flex gap-2 overflow-x-auto pb-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {suggestions.map((cat) => {
+                  const active = hasCategoryEmoji(text, cat);
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => applyCategory(cat)}
+                      className={cn(
+                        "shrink-0 h-10 px-3.5 rounded-full text-sm font-medium flex items-center gap-1.5 transition-all active:scale-95 border",
+                        active
+                          ? "bg-primary text-primary-foreground border-primary shadow-soft"
+                          : "bg-card text-foreground border-border hover:border-primary/40",
+                      )}
+                    >
+                      <span className="text-base leading-none">{cat.emoji}</span>
+                      <span>{cat.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <Button
             type="submit"
             disabled={saving || parsed.amount === 0}
