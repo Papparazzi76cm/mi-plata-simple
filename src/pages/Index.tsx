@@ -8,13 +8,20 @@ import {
   calcStreak,
   compareWithYesterday,
   getDailyStatus,
+  getDailyTrigger,
+  getYesterdayClosure,
+  pickRotatingInsight,
   reminderUrgency,
+  streakMilestone,
   sumExpensesOnDay,
   type TxLite,
 } from "@/lib/insights";
 import { ArrowDownLeft, ArrowUpRight, Bell, Flame, Receipt, PieChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { matchCategory, CATEGORIES, type Category } from "@/lib/categories";
+import { DailyTriggerBanner } from "@/components/home/DailyTriggerBanner";
+import { ClosureCard } from "@/components/home/ClosureCard";
+import { RotatingInsight } from "@/components/home/RotatingInsight";
 
 interface Transaction {
   id: string;
@@ -104,6 +111,9 @@ export default function Index() {
   const status = getDailyStatus(todayTotal, avg);
   const compare = compareWithYesterday(todayTotal, yesterdayTotal);
   const streak = calcStreak(allTx);
+  const trigger = useMemo(() => getDailyTrigger(allTx), [allTx]);
+  const closure = useMemo(() => getYesterdayClosure(allTx), [allTx]);
+  const milestone = streakMilestone(streak);
 
   const grouped = useMemo(() => groupByDay(recent.slice(0, 6)), [recent]);
 
@@ -133,6 +143,18 @@ export default function Index() {
     return { items, other, monthTotal };
   }, [allTx]);
 
+  const rotatingInsight = useMemo(
+    () =>
+      pickRotatingInsight({
+        todayTotal,
+        yesterdayTotal,
+        avg,
+        streak,
+        topCategoryLabel: breakdown.items[0]?.cat.label.toLowerCase(),
+      }),
+    [todayTotal, yesterdayTotal, avg, streak, breakdown.items],
+  );
+
   // Persist 30-day category usage so the Add screen can rank chips by habit.
   useEffect(() => {
     if (allTx.length === 0) return;
@@ -152,12 +174,21 @@ export default function Index() {
   }, [allTx]);
 
   return (
-    <div className="px-5 pt-10 space-y-6">
+    <div className="px-5 pt-10 space-y-5">
       <header>
         <p className="text-muted-foreground text-sm">Hoy con tu plata 👇</p>
         <h1 className="text-2xl font-bold tracking-tight mt-0.5">{status.headline}</h1>
         <p className="text-sm text-muted-foreground mt-1">{status.detail}</p>
       </header>
+
+      {/* Reactive daily trigger — pulls the user back every day */}
+      {!loading && <DailyTriggerBanner trigger={trigger} />}
+
+      {/* Rotating daily insight chip */}
+      {!loading && <RotatingInsight text={rotatingInsight} />}
+
+      {/* End-of-day closure (yesterday) */}
+      {!loading && closure && <ClosureCard data={closure} />}
 
       {/* Smart summary card */}
       <section
@@ -197,7 +228,7 @@ export default function Index() {
             </span>
           </p>
           <p className="text-[11px] text-muted-foreground leading-tight mt-1">
-            {streak === 0 ? "Empezá hoy tu racha" : "registrando movimientos"}
+            {milestone ?? (streak === 0 ? "Empezá hoy tu racha" : "registrando movimientos")}
           </p>
         </div>
 
