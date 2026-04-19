@@ -273,6 +273,9 @@ export default function Index() {
         </Link>
       </section>
 
+      {/* Weekly summary — habit-builder loop */}
+      {!loading && weekly.hasData && <WeeklySummary data={weekly} />}
+
       {/* Monthly breakdown by category */}
       {breakdown.monthTotal > 0 && (
         <section className="bg-card rounded-3xl p-5 shadow-soft animate-slide-up">
