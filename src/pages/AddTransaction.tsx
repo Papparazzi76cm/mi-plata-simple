@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,10 +14,53 @@ import {
   hasCategoryEmoji,
   matchCategory,
   rankCategoriesByUsage,
+  topUsedCategories,
   type Category,
 } from "@/lib/categories";
 
 const USAGE_KEY = "miplata.cat-usage.v1";
+const LAST_CAT_KEY = "miplata.last-cat.v1";
+const ABANDONED_KEY = "miplata.add-abandoned.v1";
+
+function readLastCategory(): string | null {
+  try {
+    return localStorage.getItem(LAST_CAT_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function setLastCategory(id: string) {
+  try {
+    localStorage.setItem(LAST_CAT_KEY, id);
+  } catch {
+    /* ignore */
+  }
+}
+
+function readAbandoned(): boolean {
+  try {
+    return localStorage.getItem(ABANDONED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markAbandoned() {
+  try {
+    localStorage.setItem(ABANDONED_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearAbandoned() {
+  try {
+    localStorage.removeItem(ABANDONED_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 function readUsage(): Record<string, number> {
   try {
