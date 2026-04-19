@@ -54,7 +54,7 @@ export default function Index() {
       const since = new Date();
       since.setDate(since.getDate() - 30);
 
-      const [recentRes, windowRes, remRes] = await Promise.all([
+      const [recentRes, windowRes, remRes, budgetsRes] = await Promise.all([
         supabase
           .from("transactions")
           .select("id,type,amount,description,date")
@@ -70,12 +70,18 @@ export default function Index() {
           .gte("due_date", new Date().toISOString().slice(0, 10))
           .order("due_date", { ascending: true })
           .limit(1),
+        supabase.from("budgets").select("category_id,amount"),
       ]);
 
       if (!mounted) return;
       setRecent((recentRes.data ?? []) as Transaction[]);
       setAllTx((windowRes.data ?? []) as TxLite[]);
       setNextReminder(((remRes.data ?? [])[0] as Reminder) ?? null);
+      const bMap: Record<string, number> = {};
+      for (const b of (budgetsRes.data ?? []) as { category_id: string; amount: number }[]) {
+        bMap[b.category_id] = Number(b.amount);
+      }
+      setBudgets(bMap);
       setLoading(false);
     }
 
