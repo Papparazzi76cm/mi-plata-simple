@@ -24,6 +24,7 @@ import { DailyTriggerBanner } from "@/components/home/DailyTriggerBanner";
 import { ClosureCard } from "@/components/home/ClosureCard";
 import { RotatingInsight } from "@/components/home/RotatingInsight";
 import { WeeklySummary } from "@/components/home/WeeklySummary";
+import { celebrateStreakIfMilestone } from "@/lib/celebrate";
 
 interface Transaction {
   id: string;
