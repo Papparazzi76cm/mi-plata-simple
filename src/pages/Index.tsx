@@ -243,10 +243,14 @@ export default function Index() {
               <PieChart className="h-4 w-4 text-primary" />
               <h2 className="text-base font-semibold">Gastos del mes</h2>
             </div>
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {formatGs(breakdown.monthTotal)}
-            </span>
+            <Link to="/budgets" className="text-xs font-medium text-primary">
+              Presupuestos →
+            </Link>
           </div>
+
+          <p className="text-xs text-muted-foreground tabular-nums mb-3">
+            Total: <span className="font-semibold text-foreground">{formatGs(breakdown.monthTotal)}</span>
+          </p>
 
           {breakdown.items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -255,23 +259,72 @@ export default function Index() {
           ) : (
             <ul className="space-y-3">
               {breakdown.items.map(({ cat, total }) => {
-                const pct = Math.max(2, Math.round((total / breakdown.monthTotal) * 100));
+                const sharePct = Math.max(2, Math.round((total / breakdown.monthTotal) * 100));
+                const budget = budgets[cat.id];
+                const budgetPct = budget ? Math.round((total / budget) * 100) : 0;
+                const overBudget = budget && budgetPct >= 100;
+                const nearBudget = budget && budgetPct >= 80 && budgetPct < 100;
+                const barClass = overBudget
+                  ? "bg-destructive"
+                  : nearBudget
+                    ? "bg-warn"
+                    : "gradient-primary";
                 return (
                   <li key={cat.id}>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-base leading-none">{cat.emoji}</span>
-                      <span className="text-sm font-medium flex-1 truncate">{cat.label}</span>
-                      <span className="text-xs text-muted-foreground tabular-nums">{pct}%</span>
-                      <span className="text-sm font-semibold tabular-nums shrink-0">
-                        {formatGs(total)}
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full gradient-primary rounded-full transition-all"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
+                    <Link
+                      to={`/category/${cat.id}`}
+                      className="block active:scale-[0.99] transition-transform"
+                    >
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-base leading-none">{cat.emoji}</span>
+                        <span className="text-sm font-medium flex-1 truncate">{cat.label}</span>
+                        {budget ? (
+                          <span
+                            className={cn(
+                              "text-[10px] font-bold uppercase tracking-wide tabular-nums px-1.5 py-0.5 rounded-md",
+                              overBudget
+                                ? "bg-destructive/15 text-expense"
+                                : nearBudget
+                                  ? "bg-warn/20 text-warn"
+                                  : "bg-accent text-accent-foreground",
+                            )}
+                          >
+                            {budgetPct}%
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground tabular-nums">{sharePct}%</span>
+                        )}
+                        <span className="text-sm font-semibold tabular-nums shrink-0">
+                          {formatGs(total)}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={cn("h-full rounded-full transition-all", barClass)}
+                          style={{
+                            width: `${Math.min(100, budget ? budgetPct : sharePct)}%`,
+                          }}
+                        />
+                      </div>
+                      {budget && (
+                        <p
+                          className={cn(
+                            "text-[10px] mt-1 tabular-nums",
+                            overBudget
+                              ? "text-expense font-semibold"
+                              : nearBudget
+                                ? "text-warn font-medium"
+                                : "text-muted-foreground",
+                          )}
+                        >
+                          {overBudget
+                            ? `¡Pasaste el límite! · ${formatGs(budget)}`
+                            : nearBudget
+                              ? `Cerca del límite · ${formatGs(budget)}`
+                              : `Límite: ${formatGs(budget)}`}
+                        </p>
+                      )}
+                    </Link>
                   </li>
                 );
               })}
