@@ -9,6 +9,7 @@ import { ArrowLeft, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatGs } from "@/lib/format";
 import { parseQuickInput } from "@/lib/insights";
+import { suggestCategories, hasCategoryEmoji, type Category } from "@/lib/categories";
 
 export default function AddTransaction() {
   const { user } = useAuth();
@@ -18,6 +19,21 @@ export default function AddTransaction() {
   const [saving, setSaving] = useState(false);
 
   const parsed = useMemo(() => parseQuickInput(text), [text]);
+  const suggestions = useMemo(() => suggestCategories(parsed.description || text, 4), [parsed.description, text]);
+
+  function applyCategory(cat: Category) {
+    if (hasCategoryEmoji(text, cat)) return;
+    // If the text already mentions a keyword for this category, just prepend the emoji.
+    // Otherwise insert "<emoji> <label>" so the user gets a useful description.
+    const hasKeyword = suggestions.some((s) => s.id === cat.id) && parsed.description.length > 0;
+    const next = hasKeyword
+      ? `${cat.emoji} ${text.trim()}`
+      : text.trim()
+        ? `${text.trim()} ${cat.emoji} ${cat.label.toLowerCase()}`
+        : `${cat.emoji} ${cat.label.toLowerCase()}`;
+    setText(next.slice(0, 140));
+  }
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -134,6 +150,36 @@ export default function AddTransaction() {
               <Send className="h-5 w-5" strokeWidth={2.3} />
             </button>
           </div>
+
+          {/* Category suggestions */}
+          {suggestions.length > 0 && (
+            <div className="mb-5 -mx-1">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-2 mb-2">
+                {parsed.description ? "Sugerencias" : "Rápidas"}
+              </p>
+              <div className="flex gap-2 overflow-x-auto pb-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {suggestions.map((cat) => {
+                  const active = hasCategoryEmoji(text, cat);
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => applyCategory(cat)}
+                      className={cn(
+                        "shrink-0 h-10 px-3.5 rounded-full text-sm font-medium flex items-center gap-1.5 transition-all active:scale-95 border",
+                        active
+                          ? "bg-primary text-primary-foreground border-primary shadow-soft"
+                          : "bg-card text-foreground border-border hover:border-primary/40",
+                      )}
+                    >
+                      <span className="text-base leading-none">{cat.emoji}</span>
+                      <span>{cat.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <Button
             type="submit"
