@@ -148,6 +148,156 @@ export function calcStreak(txs: TxLite[]): number {
   return streak;
 }
 
+/** Number of expense transactions logged today. */
+export function countExpensesToday(txs: TxLite[]): number {
+  const key = dayKey(new Date());
+  return txs.filter((t) => t.type === "gasto" && dayKey(new Date(t.date)) === key).length;
+}
+
+export interface DailyTrigger {
+  /** Visible message — the "pull" that makes the user act. */
+  message: string;
+  /** Short action label, only present when there's something to do. */
+  cta?: string;
+  /** Tone — drives accent color. */
+  tone: "info" | "good" | "fire" | "warn";
+  /** Optional emoji prefix for visual punch. */
+  emoji: string;
+}
+
+/**
+ * Reactive daily trigger banner. Behavior:
+ *  - 0 logs hoy   → "Hoy no registraste ningún gasto" + CTA
+ *  - 1 log y aún temprano (< 12h) → "Buen comienzo de día"
+ *  - 3+ logs hoy  → "Estás llevando buen control hoy"
+ *  - 1-2 logs y ya pasó mediodía → mensaje neutro de seguimiento
+ */
+export function getDailyTrigger(txs: TxLite[]): DailyTrigger {
+  const count = countExpensesToday(txs);
+  const hour = new Date().getHours();
+  if (count === 0) {
+    return {
+      emoji: "👀",
+      message: "Hoy no registraste ningún gasto",
+      cta: "Registrar ahora",
+      tone: "info",
+    };
+  }
+  if (count >= 3) {
+    return {
+      emoji: "🔥",
+      message: "Estás llevando buen control hoy",
+      tone: "fire",
+    };
+  }
+  if (hour < 12) {
+    return {
+      emoji: "💪",
+      message: "Buen comienzo de día",
+      tone: "good",
+    };
+  }
+  return {
+    emoji: "✍️",
+    message: count === 1 ? "Anotaste 1 movimiento hoy" : `Anotaste ${count} movimientos hoy`,
+    tone: "good",
+  };
+}
+
+export interface ClosureCard {
+  total: number;
+  avg: number;
+  message: string;
+  emoji: string;
+  tone: Mood;
+}
+
+/**
+ * "Así cerraste tu día" — built from yesterday's totals vs the prior 14d avg.
+ * Returns null if there's nothing to close (no expenses yesterday AND no avg).
+ */
+export function getYesterdayClosure(txs: TxLite[]): ClosureCard | null {
+  const yest = new Date();
+  yest.setDate(yest.getDate() - 1);
+  const total = sumExpensesOnDay(txs, yest);
+  // Compute avg over the 14d window ENDING the day before yesterday
+  // so yesterday isn't compared against itself.
+  const dayBefore = new Date(yest);
+  dayBefore.setDate(dayBefore.getDate() - 1);
+  const totals = new Map<string, number>();
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(dayBefore);
+    d.setDate(d.getDate() - i);
+    totals.set(dayKey(d), 0);
+  }
+  for (const t of txs) {
+    if (t.type !== "gasto") continue;
+    const k = dayKey(new Date(t.date));
+    if (totals.has(k)) totals.set(k, (totals.get(k) ?? 0) + Number(t.amount));
+  }
+  const active = [...totals.values()].filter((v) => v > 0);
+  const avg = active.length ? active.reduce((a, b) => a + b, 0) / active.length : 0;
+
+  if (total === 0 && avg === 0) return null;
+  if (total === 0) {
+    return { total, avg, emoji: "🎉", tone: "good", message: "Ayer no gastaste nada — ¡bien hecho!" };
+  }
+  if (avg === 0) {
+    return { total, avg, emoji: "📊", tone: "neutral", message: "Primer día con datos — vamos midiendo." };
+  }
+  const ratio = total / avg;
+  if (ratio <= 0.8) {
+    return { total, avg, emoji: "👍", tone: "good", message: "Ayer gastaste menos que tu media" };
+  }
+  if (ratio <= 1.15) {
+    return { total, avg, emoji: "✅", tone: "good", message: "Ayer cerraste en línea con tu promedio" };
+  }
+  if (ratio <= 1.4) {
+    return { total, avg, emoji: "⚠️", tone: "warn", message: "Ayer se te fue un poco" };
+  }
+  return { total, avg, emoji: "🚨", tone: "bad", message: "Ayer te excediste bastante" };
+}
+
+/** Friendly streak milestone label (returned only when a milestone applies). */
+export function streakMilestone(streak: number): string | null {
+  if (streak >= 30) return "Imparable este mes 🏆";
+  if (streak >= 14) return "Nivel experto 👀";
+  if (streak >= 7) return "Una semana completa 🔥";
+  if (streak >= 3) return "Ya estás creando hábito 💪";
+  return null;
+}
+
+/**
+ * Rotating insight chips for the Home. Picks one based on the current day-of-year
+ * so it changes daily but stays stable within a day.
+ */
+export function pickRotatingInsight(opts: {
+  todayTotal: number;
+  yesterdayTotal: number;
+  avg: number;
+  streak: number;
+  topCategoryLabel?: string;
+}): string {
+  const candidates: string[] = [];
+  if (opts.topCategoryLabel) candidates.push(`Tu gasto más común es ${opts.topCategoryLabel}`);
+  if (opts.streak >= 3) candidates.push(`Llevás ${opts.streak} días seguidos registrando`);
+  if (opts.todayTotal > 0 && opts.yesterdayTotal > 0 && opts.todayTotal < opts.yesterdayTotal) {
+    candidates.push("Hoy vas mejor que ayer");
+  }
+  if (opts.avg > 0 && opts.todayTotal > 0 && opts.todayTotal < opts.avg * 0.8) {
+    candidates.push("Estás por debajo de tu promedio diario");
+  }
+  if (opts.streak >= 5) candidates.push("Llevás buen ritmo esta semana");
+  if (candidates.length === 0) {
+    candidates.push("Registrar todos los días te ayuda a ver patrones");
+  }
+  // day-of-year for stable daily rotation
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const doy = Math.floor((now.getTime() - start.getTime()) / 86400000);
+  return candidates[doy % candidates.length];
+}
+
 /** Friendly label for a reminder due date (timezone-safe for YYYY-MM-DD). */
 export function reminderUrgency(dateStr: string): {
   label: string;
