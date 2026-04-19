@@ -94,11 +94,15 @@ export default function AddTransaction() {
       return;
     }
     // Track habit so chips reorder over time.
-    if (type === "gasto") {
-      const cat = matchCategory(description);
-      if (cat) bumpUsage(cat.id);
-    }
+    const cat = type === "gasto" ? matchCategory(description) : null;
+    if (cat) bumpUsage(cat.id);
     toast.success(type === "gasto" ? "Gasto registrado ✓" : "Ingreso registrado ✓");
+
+    // Emotional budget alert — fires only when this transaction crosses 80% / 100%.
+    if (cat && type === "gasto") {
+      void checkBudgetAlert(user.id, cat, parsed.amount);
+    }
+
     navigate("/");
   }
 
