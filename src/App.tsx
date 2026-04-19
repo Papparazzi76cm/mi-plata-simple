@@ -71,6 +71,24 @@ const App = () => (
                 </RequireAuth>
               }
             />
+            <Route
+              path="/budgets"
+              element={
+                <RequireAuth>
+                  <Budgets />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/category/:id"
+              element={
+                <RequireAuth>
+                  <AppLayout>
+                    <CategoryDetail />
+                  </AppLayout>
+                </RequireAuth>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
