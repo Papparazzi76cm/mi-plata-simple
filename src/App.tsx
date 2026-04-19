@@ -11,6 +11,8 @@ import AddTransaction from "./pages/AddTransaction";
 import Reminders from "./pages/Reminders";
 import Settings from "./pages/Settings";
 import Onboarding from "./pages/Onboarding";
+import Budgets from "./pages/Budgets";
+import CategoryDetail from "./pages/CategoryDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +67,24 @@ const App = () => (
                 <RequireAuth>
                   <AppLayout>
                     <Settings />
+                  </AppLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/budgets"
+              element={
+                <RequireAuth>
+                  <Budgets />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/category/:id"
+              element={
+                <RequireAuth>
+                  <AppLayout>
+                    <CategoryDetail />
                   </AppLayout>
                 </RequireAuth>
               }
