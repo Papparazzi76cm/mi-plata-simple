@@ -9,7 +9,34 @@ import { ArrowLeft, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatGs } from "@/lib/format";
 import { parseQuickInput } from "@/lib/insights";
-import { suggestCategories, hasCategoryEmoji, type Category } from "@/lib/categories";
+import {
+  suggestCategories,
+  hasCategoryEmoji,
+  matchCategory,
+  rankCategoriesByUsage,
+  type Category,
+} from "@/lib/categories";
+
+const USAGE_KEY = "miplata.cat-usage.v1";
+
+function readUsage(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(USAGE_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, number>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function bumpUsage(catId: string) {
+  const cur = readUsage();
+  cur[catId] = (cur[catId] ?? 0) + 1;
+  try {
+    localStorage.setItem(USAGE_KEY, JSON.stringify(cur));
+  } catch {
+    /* ignore */
+  }
+}
 
 export default function AddTransaction() {
   const { user } = useAuth();
@@ -19,7 +46,14 @@ export default function AddTransaction() {
   const [saving, setSaving] = useState(false);
 
   const parsed = useMemo(() => parseQuickInput(text), [text]);
-  const suggestions = useMemo(() => suggestCategories(parsed.description || text, 4), [parsed.description, text]);
+  const usage = useMemo(() => readUsage(), []);
+  const suggestions = useMemo(() => {
+    const desc = parsed.description || text;
+    // While the user is typing, prefer keyword matches; otherwise show
+    // habit-ranked chips (most-used categories in the last 30 days).
+    if (desc.trim()) return suggestCategories(desc, 4);
+    return rankCategoriesByUsage(usage, 5);
+  }, [parsed.description, text, usage]);
 
   function applyCategory(cat: Category) {
     if (hasCategoryEmoji(text, cat)) return;
@@ -58,6 +92,11 @@ export default function AddTransaction() {
     if (error) {
       toast.error("No se pudo guardar");
       return;
+    }
+    // Track habit so chips reorder over time.
+    if (type === "gasto") {
+      const cat = matchCategory(description);
+      if (cat) bumpUsage(cat.id);
     }
     toast.success(type === "gasto" ? "Gasto registrado ✓" : "Ingreso registrado ✓");
     navigate("/");
