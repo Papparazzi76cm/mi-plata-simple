@@ -1,8 +1,9 @@
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Download, LogOut, Trash2, ChevronRight, DollarSign, Sparkles, Cloud, Crown } from "lucide-react";
+import { Download, LogOut, Trash2, ChevronRight, DollarSign, Sparkles, Cloud, Crown, Target } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,6 +76,21 @@ export default function Settings() {
             <p className="text-xs text-muted-foreground">Guaraní paraguayo</p>
           </div>
           <span className="text-sm font-semibold text-primary">Gs</span>
+        </li>
+        <li>
+          <Link
+            to="/budgets"
+            className="w-full flex items-center gap-4 px-5 py-4 active:bg-muted transition-colors"
+          >
+            <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-accent-foreground">
+              <Target className="h-5 w-5" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="font-medium">Presupuestos</p>
+              <p className="text-xs text-muted-foreground">Definí tus límites por categoría</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
         </li>
         <li>
           <button
