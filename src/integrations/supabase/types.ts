@@ -14,7 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      reminders: {
+        Row: {
+          amount: number | null
+          created_at: string
+          due_date: string
+          id: string
+          repeat: Database["public"]["Enums"]["reminder_repeat"]
+          title: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          due_date: string
+          id?: string
+          repeat?: Database["public"]["Enums"]["reminder_repeat"]
+          title: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          repeat?: Database["public"]["Enums"]["reminder_repeat"]
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string
+          id: string
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          type?: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          type?: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +82,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      reminder_repeat: "none" | "monthly"
+      transaction_type: "gasto" | "ingreso"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +210,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      reminder_repeat: ["none", "monthly"],
+      transaction_type: ["gasto", "ingreso"],
+    },
   },
 } as const
