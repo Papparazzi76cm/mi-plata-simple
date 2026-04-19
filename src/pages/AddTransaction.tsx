@@ -132,16 +132,30 @@ export default function AddTransaction() {
   const [text, setText] = useState("");
   const [type, setType] = useState<"gasto" | "ingreso">("gasto");
   const [saving, setSaving] = useState(false);
+  const [savedSuccessfully, setSavedSuccessfully] = useState(false);
 
   const parsed = useMemo(() => parseQuickInput(text), [text]);
   const usage = useMemo(() => readUsage(), []);
+  const lastCat = useMemo(() => readLastCategory(), []);
+  const showHint = useMemo(() => readAbandoned(), []);
+  const topUsed = useMemo(() => topUsedCategories(usage, 2), [usage]);
+
+  // Mark this session as "opened but not saved" so next visit shows the hint.
+  // Cleared on successful save (handleSubmit) — runs only when component unmounts
+  // without saving.
+  useEffect(() => {
+    return () => {
+      if (!savedSuccessfully) markAbandoned();
+    };
+  }, [savedSuccessfully]);
+
   const suggestions = useMemo(() => {
     const desc = parsed.description || text;
     // While the user is typing, prefer keyword matches; otherwise show
-    // habit-ranked chips (most-used categories in the last 30 days).
+    // habit-ranked chips with the last-used category pinned first.
     if (desc.trim()) return suggestCategories(desc, 4);
-    return rankCategoriesByUsage(usage, 5);
-  }, [parsed.description, text, usage]);
+    return rankCategoriesByUsage(usage, 5, lastCat);
+  }, [parsed.description, text, usage, lastCat]);
 
   function applyCategory(cat: Category) {
     if (hasCategoryEmoji(text, cat)) return;
