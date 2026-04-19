@@ -12,8 +12,9 @@ import {
   sumExpensesOnDay,
   type TxLite,
 } from "@/lib/insights";
-import { ArrowDownLeft, ArrowUpRight, Bell, Flame, Receipt } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Bell, Flame, Receipt, PieChart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { matchCategory, CATEGORIES, type Category } from "@/lib/categories";
 
 interface Transaction {
   id: string;
@@ -60,7 +61,7 @@ export default function Index() {
           .limit(8),
         supabase
           .from("transactions")
-          .select("type,amount,date")
+          .select("type,amount,date,description")
           .gte("date", since.toISOString()),
         supabase
           .from("reminders")
@@ -98,6 +99,50 @@ export default function Index() {
   const streak = calcStreak(allTx);
 
   const grouped = useMemo(() => groupByDay(recent.slice(0, 6)), [recent]);
+
+  // Monthly breakdown by category (gastos del mes calendario actual)
+  const breakdown = useMemo(() => {
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+    const totals = new Map<string, { cat: Category; total: number }>();
+    let other = 0;
+    let monthTotal = 0;
+    for (const t of allTx) {
+      if (t.type !== "gasto") continue;
+      const d = new Date(t.date);
+      if (`${d.getFullYear()}-${d.getMonth()}` !== monthKey) continue;
+      const amt = Number(t.amount);
+      monthTotal += amt;
+      const cat = matchCategory(t.description ?? "");
+      if (!cat) {
+        other += amt;
+        continue;
+      }
+      const cur = totals.get(cat.id);
+      if (cur) cur.total += amt;
+      else totals.set(cat.id, { cat, total: amt });
+    }
+    const items = [...totals.values()].sort((a, b) => b.total - a.total).slice(0, 5);
+    return { items, other, monthTotal };
+  }, [allTx]);
+
+  // Persist 30-day category usage so the Add screen can rank chips by habit.
+  useEffect(() => {
+    if (allTx.length === 0) return;
+    const cutoff = Date.now() - 30 * 86400000;
+    const counts: Record<string, number> = {};
+    for (const t of allTx) {
+      if (t.type !== "gasto") continue;
+      if (new Date(t.date).getTime() < cutoff) continue;
+      const cat = matchCategory(t.description ?? "");
+      if (cat) counts[cat.id] = (counts[cat.id] ?? 0) + 1;
+    }
+    try {
+      localStorage.setItem("miplata.cat-usage.v1", JSON.stringify(counts));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [allTx]);
 
   return (
     <div className="px-5 pt-10 space-y-6">

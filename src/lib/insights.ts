@@ -5,6 +5,7 @@ export interface TxLite {
   type: "gasto" | "ingreso";
   amount: number;
   date: string; // ISO
+  description?: string;
 }
 
 function dayKey(d: Date): string {
