@@ -230,9 +230,6 @@ export default function Index() {
           <p className="text-[11px] text-muted-foreground leading-tight mt-1">
             {milestone ?? (streak === 0 ? "Empezá hoy tu racha" : "registrando movimientos")}
           </p>
-          <p className="text-[11px] text-muted-foreground leading-tight mt-1">
-            {streak === 0 ? "Empezá hoy tu racha" : "registrando movimientos"}
-          </p>
         </div>
 
         <Link
