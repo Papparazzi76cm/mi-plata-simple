@@ -109,15 +109,30 @@ export function matchCategory(text: string): Category | null {
 }
 
 /** Order categories by recent usage, falling back to DEFAULT_CHIPS for the rest.
- *  `usageCounts` maps category id -> number of times used. */
-export function rankCategoriesByUsage(usageCounts: Record<string, number>, limit = 5): Category[] {
+ *  `usageCounts` maps category id -> number of times used.
+ *  `pinFirst` (optional) forces a category id to appear in position 0. */
+export function rankCategoriesByUsage(
+  usageCounts: Record<string, number>,
+  limit = 5,
+  pinFirst?: string | null,
+): Category[] {
   const used = CATEGORIES.filter((c) => (usageCounts[c.id] ?? 0) > 0).sort(
     (a, b) => (usageCounts[b.id] ?? 0) - (usageCounts[a.id] ?? 0),
   );
   const out: Category[] = [];
   const seen = new Set<string>();
+
+  if (pinFirst) {
+    const pinned = CATEGORIES.find((c) => c.id === pinFirst);
+    if (pinned) {
+      out.push(pinned);
+      seen.add(pinned.id);
+    }
+  }
+
   for (const c of used) {
     if (out.length >= limit) break;
+    if (seen.has(c.id)) continue;
     out.push(c);
     seen.add(c.id);
   }
@@ -129,5 +144,15 @@ export function rankCategoriesByUsage(usageCounts: Record<string, number>, limit
     }
   }
   return out;
+}
+
+/** Top-N most used categories (by usage map). Returns empty when no data. */
+export function topUsedCategories(
+  usageCounts: Record<string, number>,
+  limit = 2,
+): Category[] {
+  return CATEGORIES.filter((c) => (usageCounts[c.id] ?? 0) > 0)
+    .sort((a, b) => (usageCounts[b.id] ?? 0) - (usageCounts[a.id] ?? 0))
+    .slice(0, limit);
 }
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,10 +14,53 @@ import {
   hasCategoryEmoji,
   matchCategory,
   rankCategoriesByUsage,
+  topUsedCategories,
   type Category,
 } from "@/lib/categories";
 
 const USAGE_KEY = "miplata.cat-usage.v1";
+const LAST_CAT_KEY = "miplata.last-cat.v1";
+const ABANDONED_KEY = "miplata.add-abandoned.v1";
+
+function readLastCategory(): string | null {
+  try {
+    return localStorage.getItem(LAST_CAT_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function setLastCategory(id: string) {
+  try {
+    localStorage.setItem(LAST_CAT_KEY, id);
+  } catch {
+    /* ignore */
+  }
+}
+
+function readAbandoned(): boolean {
+  try {
+    return localStorage.getItem(ABANDONED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markAbandoned() {
+  try {
+    localStorage.setItem(ABANDONED_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearAbandoned() {
+  try {
+    localStorage.removeItem(ABANDONED_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 function readUsage(): Record<string, number> {
   try {
@@ -89,16 +132,30 @@ export default function AddTransaction() {
   const [text, setText] = useState("");
   const [type, setType] = useState<"gasto" | "ingreso">("gasto");
   const [saving, setSaving] = useState(false);
+  const [savedSuccessfully, setSavedSuccessfully] = useState(false);
 
   const parsed = useMemo(() => parseQuickInput(text), [text]);
   const usage = useMemo(() => readUsage(), []);
+  const lastCat = useMemo(() => readLastCategory(), []);
+  const showHint = useMemo(() => readAbandoned(), []);
+  const topUsed = useMemo(() => topUsedCategories(usage, 2), [usage]);
+
+  // Mark this session as "opened but not saved" so next visit shows the hint.
+  // Cleared on successful save (handleSubmit) — runs only when component unmounts
+  // without saving.
+  useEffect(() => {
+    return () => {
+      if (!savedSuccessfully) markAbandoned();
+    };
+  }, [savedSuccessfully]);
+
   const suggestions = useMemo(() => {
     const desc = parsed.description || text;
     // While the user is typing, prefer keyword matches; otherwise show
-    // habit-ranked chips (most-used categories in the last 30 days).
+    // habit-ranked chips with the last-used category pinned first.
     if (desc.trim()) return suggestCategories(desc, 4);
-    return rankCategoriesByUsage(usage, 5);
-  }, [parsed.description, text, usage]);
+    return rankCategoriesByUsage(usage, 5, lastCat);
+  }, [parsed.description, text, usage, lastCat]);
 
   function applyCategory(cat: Category) {
     if (hasCategoryEmoji(text, cat)) return;
@@ -140,7 +197,12 @@ export default function AddTransaction() {
     }
     // Track habit so chips reorder over time.
     const cat = type === "gasto" ? matchCategory(description) : null;
-    if (cat) bumpUsage(cat.id);
+    if (cat) {
+      bumpUsage(cat.id);
+      setLastCategory(cat.id);
+    }
+    clearAbandoned();
+    setSavedSuccessfully(true);
     toast.success(type === "gasto" ? "Gasto registrado ✓" : "Ingreso registrado ✓");
 
     // Emotional budget alert — fires only when this transaction crosses 80% / 100%.
@@ -212,9 +274,18 @@ export default function AddTransaction() {
             )}
           </div>
 
-          <p className="text-xs text-muted-foreground mb-2 px-1">
-            Escribí monto y descripción juntos. Ej: <span className="font-medium">"15000 comida"</span>
-          </p>
+          {showHint && !text ? (
+            <div className="mb-3 px-3 py-2.5 rounded-xl bg-accent/60 text-accent-foreground text-xs font-medium flex items-center gap-2 animate-slide-up">
+              <span className="text-base leading-none">💡</span>
+              <span>
+                Solo escribí: <span className="font-semibold">"15000 comida"</span>
+              </span>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground mb-2 px-1">
+              Escribí monto y descripción juntos. Ej: <span className="font-medium">"15000 comida"</span>
+            </p>
+          )}
 
           {/* Chat-style input */}
           <div className="relative mb-5">
@@ -238,6 +309,36 @@ export default function AddTransaction() {
               <Send className="h-5 w-5" strokeWidth={2.3} />
             </button>
           </div>
+
+          {/* "Sugerido para vos" — top-2 most-used, only when no text typed yet */}
+          {!parsed.description.trim() && topUsed.length > 0 && (
+            <div className="mb-4 -mx-1">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-2 mb-2">
+                Sugerido para vos
+              </p>
+              <div className="flex gap-2 px-1">
+                {topUsed.map((cat) => {
+                  const active = hasCategoryEmoji(text, cat);
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => applyCategory(cat)}
+                      className={cn(
+                        "flex-1 h-14 rounded-2xl flex items-center justify-center gap-2 font-semibold text-sm transition-all active:scale-95 border-2",
+                        active
+                          ? "bg-primary text-primary-foreground border-primary shadow-soft"
+                          : "bg-card text-foreground border-primary/30 hover:border-primary/60",
+                      )}
+                    >
+                      <span className="text-xl leading-none">{cat.emoji}</span>
+                      <span>{cat.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Category suggestions */}
           {suggestions.length > 0 && (
