@@ -88,3 +88,46 @@ function escapeRegex(s: string): string {
 export function hasCategoryEmoji(text: string, cat: Category): boolean {
   return text.trim().startsWith(cat.emoji);
 }
+
+/** Pick the single best matching category for a description (first match wins).
+ *  Also matches the literal emoji at the start. Returns null when nothing matches. */
+export function matchCategory(text: string): Category | null {
+  if (!text) return null;
+  const trimmed = text.trim();
+  for (const cat of CATEGORIES) {
+    if (trimmed.startsWith(cat.emoji)) return cat;
+  }
+  const clean = normalize(text);
+  if (!clean.trim()) return null;
+  for (const cat of CATEGORIES) {
+    for (const kw of cat.keywords) {
+      const re = new RegExp(`(^|[^\\p{L}])${escapeRegex(normalize(kw))}([^\\p{L}]|$)`, "u");
+      if (re.test(clean)) return cat;
+    }
+  }
+  return null;
+}
+
+/** Order categories by recent usage, falling back to DEFAULT_CHIPS for the rest.
+ *  `usageCounts` maps category id -> number of times used. */
+export function rankCategoriesByUsage(usageCounts: Record<string, number>, limit = 5): Category[] {
+  const used = CATEGORIES.filter((c) => (usageCounts[c.id] ?? 0) > 0).sort(
+    (a, b) => (usageCounts[b.id] ?? 0) - (usageCounts[a.id] ?? 0),
+  );
+  const out: Category[] = [];
+  const seen = new Set<string>();
+  for (const c of used) {
+    if (out.length >= limit) break;
+    out.push(c);
+    seen.add(c.id);
+  }
+  for (const c of DEFAULT_CHIPS) {
+    if (out.length >= limit) break;
+    if (!seen.has(c.id)) {
+      out.push(c);
+      seen.add(c.id);
+    }
+  }
+  return out;
+}
+
