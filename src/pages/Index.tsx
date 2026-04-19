@@ -174,12 +174,21 @@ export default function Index() {
   }, [allTx]);
 
   return (
-    <div className="px-5 pt-10 space-y-6">
+    <div className="px-5 pt-10 space-y-5">
       <header>
         <p className="text-muted-foreground text-sm">Hoy con tu plata 👇</p>
         <h1 className="text-2xl font-bold tracking-tight mt-0.5">{status.headline}</h1>
         <p className="text-sm text-muted-foreground mt-1">{status.detail}</p>
       </header>
+
+      {/* Reactive daily trigger — pulls the user back every day */}
+      {!loading && <DailyTriggerBanner trigger={trigger} />}
+
+      {/* Rotating daily insight chip */}
+      {!loading && <RotatingInsight text={rotatingInsight} />}
+
+      {/* End-of-day closure (yesterday) */}
+      {!loading && closure && <ClosureCard data={closure} />}
 
       {/* Smart summary card */}
       <section
@@ -217,6 +226,9 @@ export default function Index() {
             <span className="text-base font-medium text-muted-foreground ml-1">
               {streak === 1 ? "día" : "días"}
             </span>
+          </p>
+          <p className="text-[11px] text-muted-foreground leading-tight mt-1">
+            {milestone ?? (streak === 0 ? "Empezá hoy tu racha" : "registrando movimientos")}
           </p>
           <p className="text-[11px] text-muted-foreground leading-tight mt-1">
             {streak === 0 ? "Empezá hoy tu racha" : "registrando movimientos"}
