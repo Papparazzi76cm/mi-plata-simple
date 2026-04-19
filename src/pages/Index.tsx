@@ -9,6 +9,7 @@ import {
   compareWithYesterday,
   getDailyStatus,
   getDailyTrigger,
+  getWeeklySummary,
   getYesterdayClosure,
   pickRotatingInsight,
   reminderUrgency,
@@ -22,6 +23,7 @@ import { matchCategory, CATEGORIES, type Category } from "@/lib/categories";
 import { DailyTriggerBanner } from "@/components/home/DailyTriggerBanner";
 import { ClosureCard } from "@/components/home/ClosureCard";
 import { RotatingInsight } from "@/components/home/RotatingInsight";
+import { WeeklySummary } from "@/components/home/WeeklySummary";
 
 interface Transaction {
   id: string;
@@ -155,6 +157,11 @@ export default function Index() {
     [todayTotal, yesterdayTotal, avg, streak, breakdown.items],
   );
 
+  const weekly = useMemo(
+    () => getWeeklySummary(allTx, (desc) => matchCategory(desc)),
+    [allTx],
+  );
+
   // Persist 30-day category usage so the Add screen can rank chips by habit.
   useEffect(() => {
     if (allTx.length === 0) return;
@@ -265,6 +272,9 @@ export default function Index() {
           )}
         </Link>
       </section>
+
+      {/* Weekly summary — habit-builder loop */}
+      {!loading && weekly.hasData && <WeeklySummary data={weekly} />}
 
       {/* Monthly breakdown by category */}
       {breakdown.monthTotal > 0 && (

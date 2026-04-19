@@ -38,6 +38,51 @@ function bumpUsage(catId: string) {
   }
 }
 
+/**
+ * Checks whether this just-saved expense pushed the category above 80% or 100%
+ * of its monthly budget, and shows an emotional toast only on the crossing.
+ */
+async function checkBudgetAlert(userId: string, cat: Category, amount: number) {
+  const { data: budgetRow } = await supabase
+    .from("budgets")
+    .select("amount")
+    .eq("user_id", userId)
+    .eq("category_id", cat.id)
+    .maybeSingle();
+  if (!budgetRow) return;
+  const budget = Number(budgetRow.amount);
+  if (budget <= 0) return;
+
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const { data: rows } = await supabase
+    .from("transactions")
+    .select("amount,description")
+    .eq("user_id", userId)
+    .eq("type", "gasto")
+    .gte("date", monthStart.toISOString());
+  if (!rows) return;
+
+  let after = 0;
+  for (const r of rows) {
+    if (matchCategory(r.description ?? "")?.id === cat.id) after += Number(r.amount);
+  }
+  const before = after - amount;
+  const pctBefore = (before / budget) * 100;
+  const pctAfter = (after / budget) * 100;
+
+  if (pctBefore < 100 && pctAfter >= 100) {
+    toast.error(`🚨 Ya superaste tu presupuesto de ${cat.label.toLowerCase()}`, {
+      description: `Llevás ${Math.round(pctAfter)}% del límite mensual.`,
+    });
+  } else if (pctBefore < 80 && pctAfter >= 80) {
+    toast.warning(`⚠️ Te queda poco en ${cat.label.toLowerCase()}`, {
+      description: `Vas en el ${Math.round(pctAfter)}% del presupuesto del mes.`,
+    });
+  }
+}
+
 export default function AddTransaction() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -94,11 +139,15 @@ export default function AddTransaction() {
       return;
     }
     // Track habit so chips reorder over time.
-    if (type === "gasto") {
-      const cat = matchCategory(description);
-      if (cat) bumpUsage(cat.id);
-    }
+    const cat = type === "gasto" ? matchCategory(description) : null;
+    if (cat) bumpUsage(cat.id);
     toast.success(type === "gasto" ? "Gasto registrado ✓" : "Ingreso registrado ✓");
+
+    // Emotional budget alert — fires only when this transaction crosses 80% / 100%.
+    if (cat && type === "gasto") {
+      void checkBudgetAlert(user.id, cat, parsed.amount);
+    }
+
     navigate("/");
   }
 
