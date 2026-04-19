@@ -8,13 +8,20 @@ import {
   calcStreak,
   compareWithYesterday,
   getDailyStatus,
+  getDailyTrigger,
+  getYesterdayClosure,
+  pickRotatingInsight,
   reminderUrgency,
+  streakMilestone,
   sumExpensesOnDay,
   type TxLite,
 } from "@/lib/insights";
 import { ArrowDownLeft, ArrowUpRight, Bell, Flame, Receipt, PieChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { matchCategory, CATEGORIES, type Category } from "@/lib/categories";
+import { DailyTriggerBanner } from "@/components/home/DailyTriggerBanner";
+import { ClosureCard } from "@/components/home/ClosureCard";
+import { RotatingInsight } from "@/components/home/RotatingInsight";
 
 interface Transaction {
   id: string;
@@ -104,6 +111,9 @@ export default function Index() {
   const status = getDailyStatus(todayTotal, avg);
   const compare = compareWithYesterday(todayTotal, yesterdayTotal);
   const streak = calcStreak(allTx);
+  const trigger = useMemo(() => getDailyTrigger(allTx), [allTx]);
+  const closure = useMemo(() => getYesterdayClosure(allTx), [allTx]);
+  const milestone = streakMilestone(streak);
 
   const grouped = useMemo(() => groupByDay(recent.slice(0, 6)), [recent]);
 
