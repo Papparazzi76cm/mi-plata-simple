@@ -194,7 +194,11 @@ export default function AddTransaction() {
           {suggestions.length > 0 && (
             <div className="mb-5 -mx-1">
               <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-2 mb-2">
-                {parsed.description ? "Sugerencias" : "Rápidas"}
+                {parsed.description
+                  ? "Sugerencias"
+                  : Object.keys(usage).length > 0
+                    ? "Tus más usadas"
+                    : "Rápidas"}
               </p>
               <div className="flex gap-2 overflow-x-auto pb-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {suggestions.map((cat) => {
