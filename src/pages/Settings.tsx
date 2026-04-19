@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Download, LogOut, Trash2, ChevronRight, DollarSign, Mail } from "lucide-react";
+import { Download, LogOut, Trash2, ChevronRight, DollarSign, Sparkles, Cloud, Crown } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -105,6 +105,31 @@ export default function Settings() {
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
         </li>
+      </ul>
+
+      {/* Próximamente */}
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">
+        Próximamente
+      </p>
+      <ul className="bg-card rounded-3xl shadow-soft overflow-hidden divide-y divide-border mb-6">
+        {[
+          { icon: Sparkles, title: "Insights", text: "Tendencias y consejos personalizados" },
+          { icon: Cloud, title: "Backup en la nube", text: "Tus datos siempre seguros" },
+          { icon: Crown, title: "Versión PRO", text: "Funciones avanzadas y sin límites" },
+        ].map((item) => (
+          <li key={item.title} className="flex items-center gap-4 px-5 py-4 opacity-70">
+            <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-accent-foreground">
+              <item.icon className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium">{item.title}</p>
+              <p className="text-xs text-muted-foreground">{item.text}</p>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-accent text-accent-foreground uppercase tracking-wide">
+              Pronto
+            </span>
+          </li>
+        ))}
       </ul>
 
       <AlertDialog>
