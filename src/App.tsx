@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import AddTransaction from "./pages/AddTransaction";
 import Reminders from "./pages/Reminders";
 import Settings from "./pages/Settings";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,14 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route
+              path="/onboarding"
+              element={
+                <RequireAuth>
+                  <Onboarding />
+                </RequireAuth>
+              }
+            />
             <Route
               path="/"
               element={

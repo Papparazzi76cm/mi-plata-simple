@@ -135,7 +135,7 @@ export default function Index() {
       <section className="grid grid-cols-2 gap-3">
         <div className="bg-card rounded-2xl p-4 shadow-soft">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-            <Flame className="h-3.5 w-3.5 text-orange-500" />
+            <Flame className="h-3.5 w-3.5 text-streak" />
             Racha
           </div>
           <p className="text-2xl font-bold mt-1 tabular-nums">
