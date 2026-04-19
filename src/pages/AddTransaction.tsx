@@ -197,7 +197,12 @@ export default function AddTransaction() {
     }
     // Track habit so chips reorder over time.
     const cat = type === "gasto" ? matchCategory(description) : null;
-    if (cat) bumpUsage(cat.id);
+    if (cat) {
+      bumpUsage(cat.id);
+      setLastCategory(cat.id);
+    }
+    clearAbandoned();
+    setSavedSuccessfully(true);
     toast.success(type === "gasto" ? "Gasto registrado ✓" : "Ingreso registrado ✓");
 
     // Emotional budget alert — fires only when this transaction crosses 80% / 100%.
