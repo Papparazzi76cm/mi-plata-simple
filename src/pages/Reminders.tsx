@@ -4,10 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Bell, Plus, Repeat, Trash2, X, Calendar as CalendarIcon } from "lucide-react";
+import { Bell, Plus, Repeat, Trash2, Calendar as CalendarIcon, AlertTriangle } from "lucide-react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { formatGs } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { reminderUrgency } from "@/lib/insights";
 import { z } from "zod";
 
 interface Reminder {
@@ -25,16 +26,11 @@ const schema = z.object({
   repeat: z.enum(["none", "monthly"]),
 });
 
-function daysUntil(dateStr: string): { label: string; tone: "soon" | "ok" | "past" } {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dateStr + "T00:00:00");
-  const diff = Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (diff < 0) return { label: `Vencido hace ${Math.abs(diff)}d`, tone: "past" };
-  if (diff === 0) return { label: "Vence hoy", tone: "soon" };
-  if (diff === 1) return { label: "Mañana", tone: "soon" };
-  if (diff <= 5) return { label: `En ${diff} días`, tone: "soon" };
-  return { label: due.toLocaleDateString("es-PY", { day: "2-digit", month: "short" }), tone: "ok" };
+function urgentMessage(title: string, tone: ReturnType<typeof reminderUrgency>["tone"]): string {
+  if (tone === "today") return `Hoy tenés que pagar ${title}`;
+  if (tone === "tomorrow") return `Mañana vence ${title}`;
+  if (tone === "past") return `${title} está vencido`;
+  return title;
 }
 
 export default function Reminders() {
@@ -105,6 +101,8 @@ export default function Reminders() {
     setReminders((r) => r.filter((x) => x.id !== id));
   }
 
+  const urgent = reminders.filter((r) => reminderUrgency(r.due_date).urgent);
+
   return (
     <div className="px-5 pt-10">
       <header className="mb-6 flex items-end justify-between">
@@ -113,6 +111,18 @@ export default function Reminders() {
           <h1 className="text-2xl font-bold tracking-tight">Recordatorios</h1>
         </div>
       </header>
+
+      {urgent.length > 0 && (
+        <div className="mb-4 rounded-2xl bg-warn text-warn-foreground p-4 flex items-start gap-3 shadow-soft animate-slide-up">
+          <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-sm">
+              {urgent.length === 1 ? "Tenés 1 pago urgente" : `Tenés ${urgent.length} pagos urgentes`}
+            </p>
+            <p className="text-xs opacity-90 mt-0.5">No te olvides de revisarlos.</p>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-2">
@@ -133,18 +143,23 @@ export default function Reminders() {
       ) : (
         <ul className="space-y-2.5 mb-4">
           {reminders.map((r) => {
-            const d = daysUntil(r.due_date);
+            const d = reminderUrgency(r.due_date);
             return (
               <li
                 key={r.id}
-                className="bg-card rounded-2xl p-4 shadow-soft flex items-center gap-3 animate-slide-up"
+                className={cn(
+                  "rounded-2xl p-4 shadow-soft flex items-center gap-3 animate-slide-up border",
+                  d.urgent
+                    ? "bg-destructive/5 border-destructive/30"
+                    : "bg-card border-transparent",
+                )}
               >
                 <div
                   className={cn(
                     "h-12 w-12 rounded-xl flex items-center justify-center shrink-0",
-                    d.tone === "past"
-                      ? "bg-destructive/10 text-expense"
-                      : d.tone === "soon"
+                    d.tone === "past" || d.tone === "today"
+                      ? "bg-destructive/15 text-expense"
+                      : d.tone === "tomorrow" || d.tone === "soon"
                         ? "bg-accent text-accent-foreground"
                         : "bg-muted text-muted-foreground",
                   )}
@@ -153,7 +168,7 @@ export default function Reminders() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold truncate">{r.title}</p>
+                    <p className="font-semibold truncate">{urgentMessage(r.title, d.tone)}</p>
                     {r.repeat === "monthly" && (
                       <Repeat className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     )}
@@ -162,9 +177,9 @@ export default function Reminders() {
                     <span
                       className={cn(
                         "text-xs font-medium",
-                        d.tone === "past"
+                        d.tone === "past" || d.tone === "today"
                           ? "text-expense"
-                          : d.tone === "soon"
+                          : d.tone === "tomorrow" || d.tone === "soon"
                             ? "text-primary"
                             : "text-muted-foreground",
                       )}
