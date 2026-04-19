@@ -24,6 +24,7 @@ import { DailyTriggerBanner } from "@/components/home/DailyTriggerBanner";
 import { ClosureCard } from "@/components/home/ClosureCard";
 import { RotatingInsight } from "@/components/home/RotatingInsight";
 import { WeeklySummary } from "@/components/home/WeeklySummary";
+import { celebrateStreakIfMilestone } from "@/lib/celebrate";
 
 interface Transaction {
   id: string;
@@ -162,6 +163,12 @@ export default function Index() {
     [allTx],
   );
 
+  // Subtle confetti when the user hits a streak milestone (3/7/14/30),
+  // once per milestone per day. Only after the first data load.
+  useEffect(() => {
+    if (loading) return;
+    void celebrateStreakIfMilestone(streak);
+  }, [loading, streak]);
   // Persist 30-day category usage so the Add screen can rank chips by habit.
   useEffect(() => {
     if (allTx.length === 0) return;
