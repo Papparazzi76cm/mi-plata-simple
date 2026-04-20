@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
+import { authRedirectUrl, registerAuthDeepLinkListener } from "@/lib/deepLinks";
 
 interface AuthContextValue {
   user: User | null;
@@ -30,13 +31,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Deep link listener (solo activo en mobile nativo).
+    let removeDeepLink: (() => void) | undefined;
+    registerAuthDeepLinkListener().then((remove) => {
+      removeDeepLink = remove;
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      removeDeepLink?.();
+    };
   }, []);
 
   const signInWithEmail = async (email: string) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: authRedirectUrl() },
     });
     return { error };
   };
