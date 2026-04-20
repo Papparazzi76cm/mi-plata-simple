@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   // Hot-reload desde el sandbox de Lovable durante desarrollo.
   // Cuando publiques a Play Store, comentá el bloque "server" para que use el bundle local.
   server: {
-    url: 'https://160c00d1-3c2d-4519-9bdc-c64ab52fc191.lovableproject.com?forceHideBadge=true',
+    url: 'https://mi-plata-simple.lovable.app',
     cleartext: true,
   },
 };
