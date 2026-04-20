@@ -16,27 +16,33 @@ import {
 interface MagicLinkEmailProps {
   siteName: string
   confirmationUrl: string
+  token?: string
 }
 
 export const MagicLinkEmail = ({
   siteName,
   confirmationUrl,
+  token,
 }: MagicLinkEmailProps) => (
   <Html lang="es" dir="ltr">
     <Head />
-    <Preview>Tu link de acceso a {siteName}</Preview>
+    <Preview>Tu código para entrar a {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={brand}>Mi Plata</Heading>
-        <Heading style={h1}>Tu link de acceso</Heading>
+        <Heading style={h1}>Tu código de acceso</Heading>
         <Text style={text}>
-          Tocá el botón para entrar a {siteName}. El link expira en unos minutos.
+          Ingresá este código de 6 dígitos en {siteName} para entrar:
+        </Text>
+        {token ? <Text style={codeStyle}>{token}</Text> : null}
+        <Text style={smallText}>
+          El código expira en unos minutos. ¿Preferís un link directo?
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Entrar
+          Entrar con un toque
         </Button>
         <Text style={footer}>
-          Si no pediste este link, podés ignorar este email tranqui.
+          Si no pediste este código, ignorá este email tranqui.
         </Text>
       </Container>
     </Body>
@@ -68,7 +74,22 @@ const text = {
   fontSize: '15px',
   color: 'hsl(160, 10%, 45%)',
   lineHeight: '1.6',
-  margin: '0 0 28px',
+  margin: '0 0 16px',
+}
+const smallText = {
+  fontSize: '13px',
+  color: 'hsl(160, 10%, 55%)',
+  lineHeight: '1.5',
+  margin: '24px 0 16px',
+}
+const codeStyle = {
+  fontFamily: "'SF Mono', Menlo, Courier, monospace",
+  fontSize: '36px',
+  fontWeight: 'bold' as const,
+  color: 'hsl(152, 65%, 38%)',
+  letterSpacing: '10px',
+  margin: '8px 0 24px',
+  textAlign: 'center' as const,
 }
 const button = {
   backgroundColor: 'hsl(152, 65%, 38%)',
