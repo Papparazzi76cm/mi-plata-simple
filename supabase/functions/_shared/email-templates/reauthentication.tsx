@@ -17,17 +17,17 @@ interface ReauthenticationEmailProps {
 }
 
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="es" dir="ltr">
     <Head />
-    <Preview>Your verification code</Preview>
+    <Preview>Tu código de verificación de Mi Plata</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm reauthentication</Heading>
-        <Text style={text}>Use the code below to confirm your identity:</Text>
+        <Heading style={brand}>Mi Plata</Heading>
+        <Heading style={h1}>Tu código de verificación</Heading>
+        <Text style={text}>Usá este código para confirmar tu identidad:</Text>
         <Text style={codeStyle}>{token}</Text>
         <Text style={footer}>
-          This code will expire shortly. If you didn't request this, you can
-          safely ignore this email.
+          El código expira en unos minutos. Si no lo pediste, ignorá este email.
         </Text>
       </Container>
     </Body>
@@ -36,25 +36,41 @@ export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => 
 
 export default ReauthenticationEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
+const main = {
+  backgroundColor: '#ffffff',
+  fontFamily: "'Inter', system-ui, -apple-system, Arial, sans-serif",
+}
+const container = { padding: '32px 25px', maxWidth: '480px' }
+const brand = {
+  fontSize: '14px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: 'hsl(152, 65%, 38%)',
+  letterSpacing: '0.5px',
+  margin: '0 0 24px',
+  textTransform: 'uppercase' as const,
+}
+const h1 = {
+  fontSize: '24px',
+  fontWeight: 'bold' as const,
+  color: 'hsl(160, 25%, 12%)',
   margin: '0 0 20px',
 }
 const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
+  fontSize: '15px',
+  color: 'hsl(160, 10%, 45%)',
+  lineHeight: '1.6',
+  margin: '0 0 16px',
 }
 const codeStyle = {
-  fontFamily: 'Courier, monospace',
-  fontSize: '22px',
+  fontFamily: "'SF Mono', Menlo, Courier, monospace",
+  fontSize: '32px',
   fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 30px',
+  color: 'hsl(152, 65%, 38%)',
+  letterSpacing: '8px',
+  margin: '8px 0 32px',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const footer = {
+  fontSize: '12px',
+  color: 'hsl(160, 10%, 55%)',
+  margin: '36px 0 0',
+}

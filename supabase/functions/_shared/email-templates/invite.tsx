@@ -25,26 +25,25 @@ export const InviteEmail = ({
   siteUrl,
   confirmationUrl,
 }: InviteEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="es" dir="ltr">
     <Head />
-    <Preview>You've been invited to join {siteName}</Preview>
+    <Preview>Te invitaron a sumarte a {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>You've been invited</Heading>
+        <Heading style={brand}>Mi Plata</Heading>
+        <Heading style={h1}>Te invitaron</Heading>
         <Text style={text}>
-          You've been invited to join{' '}
+          Te invitaron a sumarte a{' '}
           <Link href={siteUrl} style={link}>
             <strong>{siteName}</strong>
           </Link>
-          . Click the button below to accept the invitation and create your
-          account.
+          . Tocá el botón para aceptar y crear tu cuenta.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Accept Invitation
+          Aceptar invitación
         </Button>
         <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
+          Si no esperabas esta invitación, podés ignorar este email tranqui.
         </Text>
       </Container>
     </Body>
@@ -53,27 +52,44 @@ export const InviteEmail = ({
 
 export default InviteEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
+const main = {
+  backgroundColor: '#ffffff',
+  fontFamily: "'Inter', system-ui, -apple-system, Arial, sans-serif",
+}
+const container = { padding: '32px 25px', maxWidth: '480px' }
+const brand = {
+  fontSize: '14px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: 'hsl(152, 65%, 38%)',
+  letterSpacing: '0.5px',
+  margin: '0 0 24px',
+  textTransform: 'uppercase' as const,
+}
+const h1 = {
+  fontSize: '24px',
+  fontWeight: 'bold' as const,
+  color: 'hsl(160, 25%, 12%)',
   margin: '0 0 20px',
 }
 const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
+  fontSize: '15px',
+  color: 'hsl(160, 10%, 45%)',
+  lineHeight: '1.6',
+  margin: '0 0 28px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
+const link = { color: 'hsl(152, 65%, 38%)', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: 'hsl(152, 65%, 38%)',
   color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
+  fontSize: '15px',
+  fontWeight: 'bold' as const,
+  borderRadius: '20px',
+  padding: '14px 28px',
   textDecoration: 'none',
+  display: 'inline-block',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const footer = {
+  fontSize: '12px',
+  color: 'hsl(160, 10%, 55%)',
+  margin: '36px 0 0',
+}
