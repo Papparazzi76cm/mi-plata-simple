@@ -36,11 +36,8 @@ export const MagicLinkEmail = ({
         </Text>
         {token ? <Text style={codeStyle}>{token}</Text> : null}
         <Text style={smallText}>
-          El código expira en unos minutos. ¿Preferís un link directo?
+          El código expira en unos minutos.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Entrar con un toque
-        </Button>
         <Text style={footer}>
           Si no pediste este código, ignorá este email tranqui.
         </Text>

@@ -48,12 +48,6 @@ export const SignupEmail = ({
           :
         </Text>
         {token ? <Text style={codeStyle}>{token}</Text> : null}
-        <Text style={smallText}>
-          ¿Preferís un link directo?
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Confirmar con un toque
-        </Button>
         <Text style={footer}>
           Si no creaste esta cuenta, podés ignorar este email tranqui.
         </Text>
