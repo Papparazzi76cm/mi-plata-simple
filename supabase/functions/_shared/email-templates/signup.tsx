@@ -19,6 +19,7 @@ interface SignupEmailProps {
   siteUrl: string
   recipient: string
   confirmationUrl: string
+  token?: string
 }
 
 export const SignupEmail = ({
@@ -26,10 +27,11 @@ export const SignupEmail = ({
   siteUrl,
   recipient,
   confirmationUrl,
+  token,
 }: SignupEmailProps) => (
   <Html lang="es" dir="ltr">
     <Head />
-    <Preview>Confirmá tu email para entrar a {siteName}</Preview>
+    <Preview>Tu código para confirmar tu cuenta en {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={brand}>Mi Plata</Heading>
@@ -39,14 +41,18 @@ export const SignupEmail = ({
           <Link href={siteUrl} style={link}>
             <strong>{siteName}</strong>
           </Link>
-          . Confirmá tu email{' '}
+          . Ingresá este código de 6 dígitos para confirmar{' '}
           <Link href={`mailto:${recipient}`} style={link}>
             {recipient}
-          </Link>{' '}
-          tocando el botón:
+          </Link>
+          :
+        </Text>
+        {token ? <Text style={codeStyle}>{token}</Text> : null}
+        <Text style={smallText}>
+          ¿Preferís un link directo?
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Confirmar email
+          Confirmar con un toque
         </Button>
         <Text style={footer}>
           Si no creaste esta cuenta, podés ignorar este email tranqui.
@@ -81,7 +87,22 @@ const text = {
   fontSize: '15px',
   color: 'hsl(160, 10%, 45%)',
   lineHeight: '1.6',
-  margin: '0 0 28px',
+  margin: '0 0 16px',
+}
+const smallText = {
+  fontSize: '13px',
+  color: 'hsl(160, 10%, 55%)',
+  lineHeight: '1.5',
+  margin: '24px 0 16px',
+}
+const codeStyle = {
+  fontFamily: "'SF Mono', Menlo, Courier, monospace",
+  fontSize: '36px',
+  fontWeight: 'bold' as const,
+  color: 'hsl(152, 65%, 38%)',
+  letterSpacing: '10px',
+  margin: '8px 0 24px',
+  textAlign: 'center' as const,
 }
 const link = { color: 'hsl(152, 65%, 38%)', textDecoration: 'underline' }
 const button = {
