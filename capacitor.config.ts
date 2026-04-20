@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.160c00d13c2d45199bdcc64ab52fc191',
+  appId: 'app.lovable.miplata',
   appName: 'mi-plata-simple',
   webDir: 'dist',
   // Hot-reload desde el sandbox de Lovable durante desarrollo.
