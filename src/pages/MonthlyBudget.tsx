@@ -236,6 +236,31 @@ export default function MonthlyBudget() {
               </button>
             </section>
 
+            {/* Meta de ahorro */}
+            <section className="bg-card rounded-3xl p-5 shadow-soft">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-xl bg-accent flex items-center justify-center text-primary">
+                  <PiggyBank className="h-4 w-4" strokeWidth={2.4} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    Paso 3 · opcional
+                  </p>
+                  <p className="text-sm font-semibold">¿Cuánto querés ahorrar este mes?</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground leading-snug mb-3">
+                Tu coach te avisa si vas en ritmo, adelantado o atrasado para alcanzarla.
+              </p>
+              <Input
+                inputMode="numeric"
+                placeholder="500.000"
+                value={savingsStr ? Number(savingsStr).toLocaleString("es-PY").replace(/,/g, ".") : ""}
+                onChange={(e) => setSavingsStr(e.target.value.replace(/[^\d]/g, ""))}
+                className="h-12 text-lg font-semibold rounded-2xl tabular-nums px-4"
+              />
+            </section>
+
             {/* Resumen */}
             {total > 0 && (
               <section className="rounded-3xl p-5 gradient-card text-primary-foreground shadow-card">
@@ -247,10 +272,18 @@ export default function MonthlyBudget() {
                     <span className="opacity-90">Presupuesto mensual</span>
                     <span className="font-semibold tabular-nums">{formatGs(total)}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="opacity-90">Fijos previstos</span>
-                    <span className="font-semibold tabular-nums">- {formatGs(fixedTotal)}</span>
-                  </div>
+                  {fixedTotal > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="opacity-90">Fijos previstos</span>
+                      <span className="font-semibold tabular-nums">- {formatGs(fixedTotal)}</span>
+                    </div>
+                  )}
+                  {savingsGoal > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="opacity-90">Meta de ahorro</span>
+                      <span className="font-semibold tabular-nums">- {formatGs(savingsGoal)}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-3 pt-3 border-t border-white/20">
                   <p className="text-[11px] opacity-85">Disponible para el día a día</p>
@@ -264,7 +297,7 @@ export default function MonthlyBudget() {
                 </div>
                 {remaining < 0 && (
                   <p className="mt-2 text-[11px] font-medium opacity-90">
-                    ⚠️ Tus fijos superan tu presupuesto. Revisá los montos.
+                    ⚠️ Tus fijos + meta superan tu presupuesto. Revisá los montos.
                   </p>
                 )}
               </section>
