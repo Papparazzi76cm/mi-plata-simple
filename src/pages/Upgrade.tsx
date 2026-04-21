@@ -1,6 +1,17 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Crown, Check, Sparkles, ArrowLeft, Loader2, X } from "lucide-react";
+import { Crown, Check, Sparkles, ArrowLeft, Loader2, X, ShieldCheck, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useSubscription } from "@/hooks/useSubscription";
 import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
 import { PRO_PRICE_ID } from "@/lib/paddle";
@@ -23,6 +34,14 @@ const FEATURES_FREE = [
 export default function Upgrade() {
   const { isPro, state, subscription, loading } = useSubscription();
   const { openCheckout, loading: checkoutLoading } = usePaddleCheckout();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const isReactivation = state === "expired" || state === "past_due";
+
+  const handleConfirm = async () => {
+    setConfirmOpen(false);
+    await openCheckout(PRO_PRICE_ID);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-12">
