@@ -14,6 +14,7 @@ import Onboarding from "./pages/Onboarding";
 import Budgets from "./pages/Budgets";
 import CategoryDetail from "./pages/CategoryDetail";
 import MonthlyBudget from "./pages/MonthlyBudget";
+import Upgrade from "./pages/Upgrade";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -95,6 +96,14 @@ const App = () => (
               element={
                 <RequireAuth>
                   <MonthlyBudget />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/upgrade"
+              element={
+                <RequireAuth>
+                  <Upgrade />
                 </RequireAuth>
               }
             />
