@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatGs } from "@/lib/format";
@@ -29,6 +30,8 @@ import { WeeklySummary } from "@/components/home/WeeklySummary";
 import { LiveBalanceCard } from "@/components/home/LiveBalanceCard";
 import { WeekLiveCard } from "@/components/home/WeekLiveCard";
 import { celebrateStreakIfMilestone } from "@/lib/celebrate";
+import { CoachInbox } from "@/components/home/CoachInbox";
+import { buildCoachAlerts, markShown, wasShownToday, type ReminderLite } from "@/lib/alerts";
 
 interface Transaction {
   id: string;
@@ -52,7 +55,9 @@ export default function Index() {
   const [nextReminder, setNextReminder] = useState<Reminder | null>(null);
   const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [monthlyBudget, setMonthlyBudget] = useState<MonthlyBudget | null>(null);
+  const [allReminders, setAllReminders] = useState<ReminderLite[]>([]);
   const [loading, setLoading] = useState(true);
+  const toastFiredRef = useRef(false);
 
   useEffect(() => {
     if (!user) return;
@@ -77,7 +82,7 @@ export default function Index() {
           .select("id,title,due_date,amount")
           .gte("due_date", new Date().toISOString().slice(0, 10))
           .order("due_date", { ascending: true })
-          .limit(1),
+          .limit(10),
         supabase.from("budgets").select("category_id,amount"),
         supabase
           .from("monthly_budget")
@@ -89,7 +94,9 @@ export default function Index() {
       if (!mounted) return;
       setRecent((recentRes.data ?? []) as Transaction[]);
       setAllTx((windowRes.data ?? []) as TxLite[]);
-      setNextReminder(((remRes.data ?? [])[0] as Reminder) ?? null);
+      const reminderRows = (remRes.data ?? []) as ReminderLite[];
+      setAllReminders(reminderRows);
+      setNextReminder((reminderRows[0] as Reminder) ?? null);
       const bMap: Record<string, number> = {};
       for (const b of (budgetsRes.data ?? []) as { category_id: string; amount: number }[]) {
         bMap[b.category_id] = Number(b.amount);
