@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { Wallet, ArrowRight, TrendingUp, PiggyBank, AlertTriangle, Sparkles } from "lucide-react";
+import { Wallet, ArrowRight, TrendingUp, PiggyBank, AlertTriangle, Sparkles, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatGs } from "@/lib/format";
 import type { LiveBalance, SavingsProgress } from "@/lib/balance";
 import type { Category } from "@/lib/categories";
+import { ProLockTeaser } from "@/components/ProLockTeaser";
 
 const statusStyles: Record<LiveBalance["status"], string> = {
   healthy: "gradient-card text-primary-foreground",
@@ -39,9 +40,10 @@ interface Props {
   todayTotal: number;
   savings: SavingsProgress;
   categoryAlerts: CategoryAlert[];
+  isPro: boolean;
 }
 
-export function LiveBalanceCard({ balance, todayTotal, savings, categoryAlerts }: Props) {
+export function LiveBalanceCard({ balance, todayTotal, savings, categoryAlerts, isPro }: Props) {
   // Sin presupuesto configurado → CTA suave
   if (!balance.hasBudget) {
     return (
