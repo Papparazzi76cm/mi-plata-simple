@@ -361,6 +361,9 @@ export default function AddTransaction() {
               <div className="flex gap-2 overflow-x-auto pb-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {suggestions.map((cat) => {
                   const active = hasCategoryEmoji(text, cat);
+                  // Mostrar el contador de uso solo en modo "tus más usadas"
+                  // (sin texto, con histórico). Refuerza la sensación de hábito.
+                  const showCount = !parsed.description && (usage[cat.id] ?? 0) > 0;
                   return (
                     <button
                       key={cat.id}
@@ -375,6 +378,18 @@ export default function AddTransaction() {
                     >
                       <span className="text-base leading-none">{cat.emoji}</span>
                       <span>{cat.label}</span>
+                      {showCount && (
+                        <span
+                          className={cn(
+                            "ml-0.5 text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full",
+                            active
+                              ? "bg-primary-foreground/20 text-primary-foreground"
+                              : "bg-accent text-accent-foreground",
+                          )}
+                        >
+                          ×{usage[cat.id]}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
