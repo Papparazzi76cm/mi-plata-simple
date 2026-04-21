@@ -185,6 +185,15 @@ export default function Index() {
     [allTx],
   );
 
+  const liveBalance = useMemo(
+    () => calcLiveBalance(allTx, monthlyBudget),
+    [allTx, monthlyBudget],
+  );
+  const weekLive = useMemo(
+    () => calcWeekLive(allTx, liveBalance.dailyAllowance),
+    [allTx, liveBalance.dailyAllowance],
+  );
+
   // Subtle confetti when the user hits a streak milestone (3/7/14/30),
   // once per milestone per day. Only after the first data load.
   useEffect(() => {
@@ -226,27 +235,23 @@ export default function Index() {
       {/* End-of-day closure (yesterday) */}
       {!loading && closure && <ClosureCard data={closure} />}
 
-      {/* Smart summary card */}
-      <section
-        className={cn(
-          "rounded-3xl p-6 shadow-card animate-slide-up",
-          moodStyles[status.mood] ?? moodStyles.neutral,
-        )}
-      >
-        <p className="text-sm/none opacity-80 font-medium">💰 Hoy gastaste</p>
-        <p className="text-4xl font-bold mt-2 tracking-tight tabular-nums">{formatGs(todayTotal)}</p>
+      {/* LIVE BALANCE — protagonista */}
+      {!loading && <LiveBalanceCard balance={liveBalance} todayTotal={todayTotal} />}
 
-        <div className="mt-5 pt-5 border-t border-current/20 grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <p className="opacity-75 text-xs">📊 Promedio diario</p>
-            <p className="font-semibold mt-1 tabular-nums">{formatGs(avg)}</p>
-          </div>
-          <div>
-            <p className="opacity-75 text-xs">🎯 Vs ayer</p>
-            <p className="font-semibold mt-1">
-              {compare.label} {compare.emoji}
-            </p>
-          </div>
+      {/* Vista semanal real */}
+      {!loading && <WeekLiveCard data={weekLive} />}
+
+      {/* Hoy en detalle (mini) — promedio + comparación con ayer */}
+      <section className="bg-card rounded-2xl p-4 shadow-soft grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">📊 Promedio diario</p>
+          <p className="font-semibold mt-1 tabular-nums">{formatGs(avg)}</p>
+        </div>
+        <div>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">🎯 Vs ayer</p>
+          <p className="font-semibold mt-1 text-sm">
+            {compare.label} {compare.emoji}
+          </p>
         </div>
       </section>
 
