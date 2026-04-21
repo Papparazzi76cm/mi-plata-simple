@@ -192,7 +192,7 @@ export function LiveImpactPreview({ amount, description, type }: Props) {
               className={cn(
                 "flex items-center gap-3 px-4 py-2.5 text-sm",
                 l.tone === "bad" && "text-destructive",
-                l.tone === "warn" && "text-warning",
+                l.tone === "warn" && "text-warn",
                 l.tone === "good" && "text-foreground",
               )}
             >
