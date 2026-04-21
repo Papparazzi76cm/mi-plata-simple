@@ -47,7 +47,7 @@ export default function MonthlyBudget() {
       if (!mounted) return;
       if (data) {
         setTotalStr(data.total_amount > 0 ? String(Math.round(Number(data.total_amount))) : "");
-        const fx = (data.fixed_expenses ?? []) as FixedExpense[];
+        const fx = data.fixed_expenses as unknown as FixedExpense[];
         setFixed(Array.isArray(fx) ? fx : []);
       }
       setLoading(false);
