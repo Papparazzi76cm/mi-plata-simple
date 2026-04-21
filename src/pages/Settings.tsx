@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils";
 export default function Settings() {
   const { user, signOut } = useAuth();
   const { isPro, state, subscription } = useSubscription();
+  const { country, countries, setCountry } = usePreferences();
+  const [countryOpen, setCountryOpen] = useState(false);
 
   async function handleExport() {
     const [tx, rem] = await Promise.all([
