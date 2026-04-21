@@ -38,14 +38,16 @@ export function ProLockTeaser({ title, description, variant = "card" }: Props) {
           <p className={cn("text-[11px] mt-0.5 leading-snug", isOnCard ? "opacity-85" : "text-muted-foreground")}>
             {description}
           </p>
-          <p
+          <span
             className={cn(
-              "text-[11px] font-bold mt-1.5 uppercase tracking-wider",
-              isOnCard ? "opacity-95" : "text-primary",
+              "inline-flex items-center gap-1 text-[11px] font-bold mt-2 uppercase tracking-wider rounded-full px-2.5 py-1",
+              isOnCard
+                ? "bg-white/25 text-current"
+                : "gradient-primary text-primary-foreground",
             )}
           >
-            Hacerme PRO →
-          </p>
+            Desbloquear PRO →
+          </span>
         </div>
       </div>
     </Link>
