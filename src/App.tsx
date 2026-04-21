@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { RequireAuth } from "@/components/RequireAuth";
 import { AppLayout } from "@/components/AppLayout";
 import Index from "./pages/Index";
@@ -25,7 +26,8 @@ const App = () => (
       <Sonner position="top-center" />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
+          <PreferencesProvider>
+            <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route
               path="/onboarding"
@@ -107,8 +109,9 @@ const App = () => (
                 </RequireAuth>
               }
             />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </PreferencesProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
