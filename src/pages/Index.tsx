@@ -81,7 +81,7 @@ export default function Index() {
         supabase.from("budgets").select("category_id,amount"),
         supabase
           .from("monthly_budget")
-          .select("total_amount,fixed_expenses")
+          .select("total_amount,fixed_expenses,savings_goal")
           .eq("user_id", user.id)
           .maybeSingle(),
       ]);
@@ -100,6 +100,7 @@ export default function Index() {
         setMonthlyBudget({
           total_amount: Number(mBudgetRes.data.total_amount),
           fixed_expenses: Array.isArray(fx) ? fx : [],
+          savings_goal: Number((mBudgetRes.data as { savings_goal?: number }).savings_goal ?? 0),
         });
       } else {
         setMonthlyBudget(null);
