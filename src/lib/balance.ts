@@ -10,6 +10,22 @@ export interface FixedExpense {
 export interface MonthlyBudget {
   total_amount: number;
   fixed_expenses: FixedExpense[];
+  savings_goal: number;
+}
+
+export interface SavingsProgress {
+  /** Meta mensual fijada por el usuario (Gs). */
+  goal: number;
+  /** Ahorro actual estimado del mes = ingresos - gastos del mes. */
+  current: number;
+  /** % de la meta cubierto (0–999). */
+  percent: number;
+  /** Proyección de ahorro a fin de mes según ritmo actual. */
+  projection: number;
+  /** Estado emocional. */
+  status: "none" | "behind" | "onTrack" | "ahead" | "reached";
+  /** ¿Tiene meta configurada? */
+  hasGoal: boolean;
 }
 
 export interface LiveBalance {
