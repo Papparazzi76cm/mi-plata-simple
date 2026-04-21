@@ -13,6 +13,7 @@ import Settings from "./pages/Settings";
 import Onboarding from "./pages/Onboarding";
 import Budgets from "./pages/Budgets";
 import CategoryDetail from "./pages/CategoryDetail";
+import MonthlyBudget from "./pages/MonthlyBudget";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -86,6 +87,14 @@ const App = () => (
                   <AppLayout>
                     <CategoryDetail />
                   </AppLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/presupuesto-mensual"
+              element={
+                <RequireAuth>
+                  <MonthlyBudget />
                 </RequireAuth>
               }
             />
