@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2, Wallet } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Wallet, PiggyBank } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +33,7 @@ export default function MonthlyBudget() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [totalStr, setTotalStr] = useState("");
+  const [savingsStr, setSavingsStr] = useState("");
   const [fixed, setFixed] = useState<FixedExpense[]>([]);
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function MonthlyBudget() {
     (async () => {
       const { data } = await supabase
         .from("monthly_budget")
-        .select("total_amount,fixed_expenses")
+        .select("total_amount,fixed_expenses,savings_goal")
         .eq("user_id", user.id)
         .maybeSingle();
       if (!mounted) return;
@@ -49,6 +50,8 @@ export default function MonthlyBudget() {
         setTotalStr(data.total_amount > 0 ? String(Math.round(Number(data.total_amount))) : "");
         const fx = data.fixed_expenses as unknown as FixedExpense[];
         setFixed(Array.isArray(fx) ? fx : []);
+        const sg = Number((data as { savings_goal?: number }).savings_goal ?? 0);
+        setSavingsStr(sg > 0 ? String(Math.round(sg)) : "");
       }
       setLoading(false);
     })();
@@ -58,8 +61,9 @@ export default function MonthlyBudget() {
   }, [user]);
 
   const total = parseAmount(totalStr);
+  const savingsGoal = parseAmount(savingsStr);
   const fixedTotal = fixed.reduce((a, f) => a + Number(f.amount || 0), 0);
-  const remaining = total - fixedTotal;
+  const remaining = total - fixedTotal - savingsGoal;
 
   function addFixed(label = "") {
     setFixed((prev) => [...prev, { id: uid(), label, amount: 0 }]);
@@ -91,6 +95,7 @@ export default function MonthlyBudget() {
           user_id: user.id,
           total_amount: total,
           fixed_expenses: cleanFixed,
+          savings_goal: savingsGoal,
         },
         { onConflict: "user_id" },
       );
