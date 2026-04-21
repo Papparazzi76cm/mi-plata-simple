@@ -217,3 +217,58 @@ export function calcWeekLive(txs: TxLite[], dailyAllowance: number): WeekLive {
     status,
   };
 }
+
+// ---------- Meta de ahorro mensual ----------
+
+export function calcSavings(
+  txs: TxLite[],
+  budget: MonthlyBudget | null,
+): SavingsProgress {
+  const goal = Math.max(0, Number(budget?.savings_goal ?? 0));
+  const now = new Date();
+  const dayOfMonth = now.getDate();
+  const daysInMonth = endOfMonth(now).getDate();
+  const monthStart = startOfMonth(now).getTime();
+  const todayEnd = (() => {
+    const d = startOfToday();
+    d.setHours(23, 59, 59, 999);
+    return d.getTime();
+  })();
+
+  let income = 0;
+  let spent = 0;
+  for (const t of txs) {
+    const ts = new Date(t.date).getTime();
+    if (ts < monthStart || ts > todayEnd) continue;
+    if (t.type === "ingreso") income += Number(t.amount);
+    else if (t.type === "gasto") spent += Number(t.amount);
+  }
+
+  const current = Math.max(0, income - spent);
+  const percent = goal > 0 ? Math.min(999, Math.round((current / goal) * 100)) : 0;
+
+  // Proyección: si seguís al mismo ritmo el resto del mes
+  const dailyNet = dayOfMonth > 0 ? (income - spent) / dayOfMonth : 0;
+  const projection = Math.round(Math.max(0, dailyNet * daysInMonth));
+
+  let status: SavingsProgress["status"] = "none";
+  if (goal > 0) {
+    if (percent >= 100) status = "reached";
+    else {
+      // Comparar % de ahorro con % del mes transcurrido
+      const monthPct = (dayOfMonth / daysInMonth) * 100;
+      if (percent >= monthPct + 5) status = "ahead";
+      else if (percent >= monthPct - 10) status = "onTrack";
+      else status = "behind";
+    }
+  }
+
+  return {
+    goal,
+    current,
+    percent,
+    projection,
+    status,
+    hasGoal: goal > 0,
+  };
+}
