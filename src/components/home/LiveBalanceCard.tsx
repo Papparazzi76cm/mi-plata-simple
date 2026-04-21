@@ -135,10 +135,10 @@ export function LiveBalanceCard({ balance, todayTotal, savings, categoryAlerts, 
         </div>
         <div>
           <p className="opacity-75 text-[10px] uppercase tracking-wider flex items-center gap-0.5">
-            <TrendingUp className="h-2.5 w-2.5" /> Cierre
+            {isPro ? <TrendingUp className="h-2.5 w-2.5" /> : <Lock className="h-2.5 w-2.5" />} Cierre
           </p>
           <p className="font-semibold mt-1 tabular-nums truncate">
-            {formatGs(balance.projection)}
+            {isPro ? formatGs(balance.projection) : "PRO"}
           </p>
         </div>
       </div>
@@ -150,14 +150,24 @@ export function LiveBalanceCard({ balance, todayTotal, savings, categoryAlerts, 
         </p>
       )}
 
-      {totalBudget > 0 && projVsBudgetPct >= 105 && (
+      {totalBudget > 0 && projVsBudgetPct >= 105 && isPro && (
         <p className="mt-2 text-[11px] font-semibold leading-snug">
           ⚠️ A este ritmo cerrás {projVsBudgetPct - 100}% sobre tu presupuesto
         </p>
       )}
 
-      {/* META DE AHORRO */}
-      {savings.hasGoal && (
+      {/* PROYECCIÓN — bloqueada si no es PRO */}
+      {!isPro && (
+        <div className="mt-4">
+          <ProLockTeaser
+            title="Proyección de cierre del mes"
+            description="Anticipá cómo cerrás el mes según tu ritmo de gasto."
+          />
+        </div>
+      )}
+
+      {/* META DE AHORRO — solo PRO */}
+      {isPro && savings.hasGoal && (
         <div className="mt-5 pt-5 border-t border-current/20">
           <div className="flex items-center justify-between gap-2 mb-2">
             <p className="text-[11px] uppercase tracking-wider opacity-85 font-semibold flex items-center gap-1.5">
@@ -190,7 +200,7 @@ export function LiveBalanceCard({ balance, todayTotal, savings, categoryAlerts, 
         </div>
       )}
 
-      {!savings.hasGoal && (
+      {isPro && !savings.hasGoal && (
         <Link
           to="/presupuesto-mensual"
           className="mt-4 flex items-center justify-between gap-2 text-[11px] font-medium opacity-85 hover:opacity-100 bg-white/15 rounded-xl px-3 py-2 transition"
@@ -201,6 +211,15 @@ export function LiveBalanceCard({ balance, todayTotal, savings, categoryAlerts, 
           </span>
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
+      )}
+
+      {!isPro && (
+        <div className="mt-4">
+          <ProLockTeaser
+            title="Meta de ahorro mensual"
+            description="Fijate una meta y mirá tu progreso día a día."
+          />
+        </div>
       )}
 
       {/* CATEGORÍAS CERCA DEL LÍMITE */}
