@@ -133,7 +133,7 @@ export default function Upgrade() {
           </ul>
 
           <Button
-            onClick={() => openCheckout(PRO_PRICE_ID)}
+            onClick={() => setConfirmOpen(true)}
             disabled={checkoutLoading || (isPro && state !== "expired")}
             className={cn(
               "w-full h-12 rounded-2xl text-base font-bold gradient-primary text-primary-foreground hover:opacity-90 transition",
@@ -144,7 +144,7 @@ export default function Upgrade() {
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : isPro && state !== "expired" ? (
               "Ya tenés PRO"
-            ) : state === "expired" || state === "past_due" ? (
+            ) : isReactivation ? (
               "Reactivar PRO"
             ) : (
               "Hacerme PRO"
