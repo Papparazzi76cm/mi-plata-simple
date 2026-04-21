@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ import {
 
 export default function Settings() {
   const { user, signOut } = useAuth();
+  const { isPro, state, subscription } = useSubscription();
 
   async function handleExport() {
     const [tx, rem] = await Promise.all([
@@ -65,6 +67,44 @@ export default function Settings() {
           <p className="font-medium truncate">{user?.email ?? "—"}</p>
         </div>
       </section>
+
+      {/* PRO card / upgrade */}
+      <Link
+        to="/upgrade"
+        className="block rounded-3xl p-5 shadow-card mb-5 active:scale-[0.99] transition-transform gradient-card text-primary-foreground"
+      >
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center">
+            <Crown className="h-6 w-6" />
+          </div>
+          <div className="flex-1 min-w-0">
+            {isPro ? (
+              <>
+                <p className="text-xs uppercase tracking-wider opacity-85 font-semibold">Mi Plata PRO</p>
+                <p className="font-bold mt-0.5">
+                  {state === "canceled" ? "Activa hasta fin de período" : "Suscripción activa"}
+                </p>
+                {subscription?.current_period_end && (
+                  <p className="text-[11px] opacity-80 mt-0.5">
+                    Renueva el{" "}
+                    {new Date(subscription.current_period_end).toLocaleDateString("es-PY", {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-xs uppercase tracking-wider opacity-85 font-semibold">Hacete PRO</p>
+                <p className="font-bold mt-0.5">Desbloqueá meta de ahorro y proyecciones</p>
+                <p className="text-[11px] opacity-80 mt-0.5">Desde $2,99/mes · cancelá cuando quieras</p>
+              </>
+            )}
+          </div>
+          <ChevronRight className="h-5 w-5 opacity-80" />
+        </div>
+      </Link>
 
       <ul className="bg-card rounded-3xl shadow-soft overflow-hidden divide-y divide-border mb-5">
         <li className="flex items-center gap-4 px-5 py-4">
@@ -129,9 +169,8 @@ export default function Settings() {
       </p>
       <ul className="bg-card rounded-3xl shadow-soft overflow-hidden divide-y divide-border mb-6">
         {[
-          { icon: Sparkles, title: "Insights", text: "Tendencias y consejos personalizados" },
+          { icon: Sparkles, title: "Insights avanzados", text: "Tendencias profundas y consejos personalizados" },
           { icon: Cloud, title: "Backup en la nube", text: "Tus datos siempre seguros" },
-          { icon: Crown, title: "Versión PRO", text: "Funciones avanzadas y sin límites" },
         ].map((item) => (
           <li key={item.title} className="flex items-center gap-4 px-5 py-4 opacity-70">
             <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-accent-foreground">

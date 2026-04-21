@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { matchCategory, type Category } from "@/lib/categories";
 import { calcLiveBalance, calcSavings, type MonthlyBudget } from "@/lib/balance";
@@ -30,6 +31,7 @@ interface MonthData {
  */
 export function LiveImpactPreview({ amount, description, type }: Props) {
   const { user } = useAuth();
+  const { isPro } = useSubscription();
   const [data, setData] = useState<MonthData | null>(null);
 
   useEffect(() => {
@@ -156,9 +158,9 @@ export function LiveImpactPreview({ amount, description, type }: Props) {
     }
   }
 
-  // ---------- Línea 3: impacto en meta de ahorro ----------
+  // ---------- Línea 3: impacto en meta de ahorro (solo PRO) ----------
   let line3: { text: string; tone: "good" | "warn" | "bad" } | null = null;
-  if (savingsAfter.hasGoal) {
+  if (isPro && savingsAfter.hasGoal) {
     const drop = savingsBefore.percent - savingsAfter.percent;
     if (drop > 0) {
       line3 = {
