@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Download, LogOut, Trash2, ChevronRight, DollarSign, Sparkles, Cloud, Crown, Target } from "lucide-react";
+import { Download, LogOut, Trash2, ChevronRight, Sparkles, Cloud, Crown, Target, Globe, Check } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +17,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export default function Settings() {
   const { user, signOut } = useAuth();

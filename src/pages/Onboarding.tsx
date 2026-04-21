@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Wallet, Zap, Bell, ChevronRight } from "lucide-react";
+import { Wallet, Zap, Bell, ChevronRight, Globe, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePreferences } from "@/contexts/PreferencesContext";
 
-const steps = [
+const intros = [
   {
     icon: Wallet,
     title: "Tu coach financiero diario",
@@ -25,12 +26,15 @@ const steps = [
 export const ONBOARDING_KEY = "miplata.onboarded.v1";
 
 export default function Onboarding() {
-  const [step, setStep] = useState(0);
   const navigate = useNavigate();
-  const Icon = steps[step].icon;
-  const last = step === steps.length - 1;
+  const { country, countries, setCountry } = usePreferences();
+  const [step, setStep] = useState(0);
 
-  function next() {
+  const totalSteps = intros.length + 1; // +1 para el paso del país
+  const isCountryStep = step === intros.length;
+  const last = step === totalSteps - 1;
+
+  async function next() {
     if (last) {
       localStorage.setItem(ONBOARDING_KEY, "1");
       navigate("/", { replace: true });
@@ -57,17 +61,59 @@ export default function Onboarding() {
         )}
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-        <div className="h-24 w-24 rounded-3xl gradient-primary shadow-fab flex items-center justify-center mb-8 animate-slide-up">
-          <Icon className="h-12 w-12 text-primary-foreground" strokeWidth={2.2} />
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight max-w-xs">{steps[step].title}</h1>
-        <p className="text-muted-foreground mt-3 max-w-xs leading-relaxed">{steps[step].text}</p>
+      <div className="flex-1 flex flex-col items-center px-6 text-center pt-4">
+        {!isCountryStep ? (
+          <>
+            <div className="h-24 w-24 rounded-3xl gradient-primary shadow-fab flex items-center justify-center mb-8 animate-slide-up">
+              {(() => {
+                const Icon = intros[step].icon;
+                return <Icon className="h-12 w-12 text-primary-foreground" strokeWidth={2.2} />;
+              })()}
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight max-w-xs">{intros[step].title}</h1>
+            <p className="text-muted-foreground mt-3 max-w-xs leading-relaxed">{intros[step].text}</p>
+          </>
+        ) : (
+          <div className="w-full max-w-md flex flex-col items-center animate-slide-up">
+            <div className="h-20 w-20 rounded-3xl gradient-primary shadow-fab flex items-center justify-center mb-6">
+              <Globe className="h-10 w-10 text-primary-foreground" strokeWidth={2.2} />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">¿Dónde vivís?</h1>
+            <p className="text-muted-foreground mt-2 mb-6 max-w-xs leading-relaxed">
+              Lo usamos para mostrar los montos en tu moneda. Podés cambiarlo después.
+            </p>
+
+            <ul className="w-full bg-card rounded-3xl shadow-soft overflow-hidden divide-y divide-border max-h-[55vh] overflow-y-auto text-left">
+              {countries.map((c) => {
+                const selected = c.code === country.code;
+                return (
+                  <li key={c.code}>
+                    <button
+                      type="button"
+                      onClick={() => setCountry(c.code)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-4 py-3 active:bg-muted transition-colors",
+                        selected && "bg-primary/5",
+                      )}
+                    >
+                      <span className="text-2xl leading-none">{c.flag}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{c.name}</p>
+                        <p className="text-[11px] text-muted-foreground">{c.currency}</p>
+                      </div>
+                      {selected && <Check className="h-4 w-4 text-primary shrink-0" />}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
       </div>
 
-      <div className="px-6 pb-10 space-y-6">
+      <div className="px-6 pb-10 pt-6 space-y-6">
         <div className="flex justify-center gap-2">
-          {steps.map((_, i) => (
+          {Array.from({ length: totalSteps }).map((_, i) => (
             <span
               key={i}
               className={cn(
