@@ -275,6 +275,13 @@ export default function AddTransaction() {
             )}
           </div>
 
+          {/* 🧠 Predicción de impacto en tiempo real */}
+          <LiveImpactPreview
+            amount={parsed.amount}
+            description={parsed.description}
+            type={type}
+          />
+
           {showHint && !text ? (
             <div className="mb-3 px-3 py-2.5 rounded-xl bg-accent/60 text-accent-foreground text-xs font-medium flex items-center gap-2 animate-slide-up">
               <span className="text-base leading-none">💡</span>
