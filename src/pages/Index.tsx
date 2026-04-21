@@ -223,6 +223,40 @@ export default function Index() {
     return items.sort((a, b) => b.pct - a.pct).slice(0, 2);
   }, [allTx, budgets]);
 
+  // 🔔 Motor de alertas del coach (riesgo + hábito)
+  const coachAlerts = useMemo(
+    () =>
+      buildCoachAlerts({
+        txs: allTx,
+        balance: liveBalance,
+        savings,
+        categoryBudgets: budgets,
+        reminders: allReminders,
+        streak,
+      }),
+    [allTx, liveBalance, savings, budgets, allReminders, streak],
+  );
+
+  // Disparar el toast de la alerta más prioritaria que no se haya mostrado hoy.
+  // Se ejecuta una sola vez por sesión (evitamos re-disparar al re-render).
+  useEffect(() => {
+    if (loading || toastFiredRef.current || coachAlerts.length === 0) return;
+    const next = coachAlerts.find((a) => !wasShownToday(a.id));
+    if (!next) return;
+    toastFiredRef.current = true;
+    const t = setTimeout(() => {
+      toast(`${next.emoji} ${next.title}`, {
+        description: next.detail,
+        duration: next.severity === "critical" ? 7000 : 5000,
+        action: next.href && next.cta
+          ? { label: next.cta, onClick: () => { window.location.assign(next.href!); } }
+          : undefined,
+      });
+      markShown(next.id);
+    }, 800);
+    return () => clearTimeout(t);
+  }, [loading, coachAlerts]);
+
   // Subtle confetti when the user hits a streak milestone (3/7/14/30),
   // once per milestone per day. Only after the first data load.
   useEffect(() => {
@@ -257,6 +291,9 @@ export default function Index() {
 
       {/* Reactive daily trigger — pulls the user back every day */}
       {!loading && <DailyTriggerBanner trigger={trigger} />}
+
+      {/* 🔔 Bandeja del coach — alertas contextuales (riesgo + hábito) */}
+      {!loading && coachAlerts.length > 0 && <CoachInbox alerts={coachAlerts} />}
 
       {/* Coach del día — insight protagonista, generado dinámicamente */}
       {!loading && topInsight && <CoachCard insight={topInsight} greeting={greeting} />}
