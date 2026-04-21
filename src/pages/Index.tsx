@@ -17,7 +17,7 @@ import {
   type TxLite,
 } from "@/lib/insights";
 import { generateCoachInsights, detectPatterns, greetingByHour } from "@/lib/coach";
-import { calcLiveBalance, calcWeekLive, type MonthlyBudget, type FixedExpense } from "@/lib/balance";
+import { calcLiveBalance, calcWeekLive, calcSavings, type MonthlyBudget, type FixedExpense } from "@/lib/balance";
 import { ArrowDownLeft, ArrowUpRight, Bell, Flame, Receipt, PieChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { matchCategory, type Category } from "@/lib/categories";
@@ -187,6 +187,36 @@ export default function Index() {
     () => calcWeekLive(allTx, liveBalance.dailyAllowance),
     [allTx, liveBalance.dailyAllowance],
   );
+  const savings = useMemo(
+    () => calcSavings(allTx, monthlyBudget),
+    [allTx, monthlyBudget],
+  );
+
+  // Top categorías cerca del límite (≥80%) — para mostrar en LiveBalanceCard
+  const categoryAlerts = useMemo(() => {
+    const items: { cat: Category; pct: number; spent: number; limit: number }[] = [];
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+    const totals = new Map<string, number>();
+    for (const t of allTx) {
+      if (t.type !== "gasto") continue;
+      const d = new Date(t.date);
+      if (`${d.getFullYear()}-${d.getMonth()}` !== monthKey) continue;
+      const cat = matchCategory(t.description ?? "");
+      if (!cat) continue;
+      totals.set(cat.id, (totals.get(cat.id) ?? 0) + Number(t.amount));
+    }
+    for (const [catId, limit] of Object.entries(budgets)) {
+      const spent = totals.get(catId) ?? 0;
+      const pct = Math.round((spent / limit) * 100);
+      if (pct < 80) continue;
+      const cat = (
+        require("@/lib/categories") as { CATEGORIES: Category[] }
+      ).CATEGORIES.find((c) => c.id === catId);
+      if (cat) items.push({ cat, pct, spent, limit });
+    }
+    return items.sort((a, b) => b.pct - a.pct).slice(0, 2);
+  }, [allTx, budgets]);
 
   // Subtle confetti when the user hits a streak milestone (3/7/14/30),
   // once per milestone per day. Only after the first data load.
