@@ -7,18 +7,18 @@ import { cn } from "@/lib/utils";
 const steps = [
   {
     icon: Wallet,
-    title: "Controla tu dinero en segundos",
-    text: "Mi Plata es tu asistente diario para no perder de vista lo que gastás.",
+    title: "Tu coach financiero diario",
+    text: "Mi Plata no es solo una app de gastos — te ayuda a entender tu plata y mejorar día a día.",
   },
   {
     icon: Zap,
-    title: "Apuntá lo que gastás, sin complicarte",
-    text: "Escribí “20000 comida” y listo. Así de rápido.",
+    title: "Anotá rápido, entendé al instante",
+    text: "Escribí “20000 comida” y listo. Tu coach analiza tus patrones y te habla con datos reales.",
   },
   {
     icon: Bell,
-    title: "Y no olvides ningún pago",
-    text: "Te avisamos cuando vence la luz, el internet o el alquiler.",
+    title: "Patrones, alertas y consejos reales",
+    text: "Vas a ver cuándo gastás de más, qué categoría se te va de control y cómo cerrarías el mes.",
   },
 ];
 

@@ -84,7 +84,7 @@ export default function Auth() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Mi Plata</h1>
           <p className="text-muted-foreground mt-2 text-center">
-            Tu plata, bajo control. Simple y rápido.
+            Tu coach financiero diario.<br />Simple, real y en tu bolsillo.
           </p>
         </div>
 

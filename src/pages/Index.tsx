@@ -11,18 +11,19 @@ import {
   getDailyTrigger,
   getWeeklySummary,
   getYesterdayClosure,
-  pickRotatingInsight,
   reminderUrgency,
   streakMilestone,
   sumExpensesOnDay,
   type TxLite,
 } from "@/lib/insights";
+import { generateCoachInsights, detectPatterns, greetingByHour } from "@/lib/coach";
 import { ArrowDownLeft, ArrowUpRight, Bell, Flame, Receipt, PieChart } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { matchCategory, CATEGORIES, type Category } from "@/lib/categories";
+import { matchCategory, type Category } from "@/lib/categories";
 import { DailyTriggerBanner } from "@/components/home/DailyTriggerBanner";
 import { ClosureCard } from "@/components/home/ClosureCard";
-import { RotatingInsight } from "@/components/home/RotatingInsight";
+import { CoachCard } from "@/components/home/CoachCard";
+import { PatternsCard } from "@/components/home/PatternsCard";
 import { WeeklySummary } from "@/components/home/WeeklySummary";
 import { celebrateStreakIfMilestone } from "@/lib/celebrate";
 
@@ -146,17 +147,20 @@ export default function Index() {
     return { items, other, monthTotal };
   }, [allTx]);
 
-  const rotatingInsight = useMemo(
+  const coachInsights = useMemo(
     () =>
-      pickRotatingInsight({
+      generateCoachInsights({
+        txs: allTx,
         todayTotal,
         yesterdayTotal,
-        avg,
+        avg14: avg,
         streak,
-        topCategoryLabel: breakdown.items[0]?.cat.label.toLowerCase(),
       }),
-    [todayTotal, yesterdayTotal, avg, streak, breakdown.items],
+    [allTx, todayTotal, yesterdayTotal, avg, streak],
   );
+  const topInsight = coachInsights[0] ?? null;
+  const patterns = useMemo(() => detectPatterns(allTx), [allTx]);
+  const greeting = useMemo(() => greetingByHour(), []);
 
   const weekly = useMemo(
     () => getWeeklySummary(allTx, (desc) => matchCategory(desc)),
@@ -190,7 +194,7 @@ export default function Index() {
   return (
     <div className="px-5 pt-10 space-y-5">
       <header>
-        <p className="text-muted-foreground text-sm">Hoy con tu plata 👇</p>
+        <p className="text-muted-foreground text-sm">{greeting} · tu coach financiero</p>
         <h1 className="text-2xl font-bold tracking-tight mt-0.5">{status.headline}</h1>
         <p className="text-sm text-muted-foreground mt-1">{status.detail}</p>
       </header>
@@ -198,8 +202,8 @@ export default function Index() {
       {/* Reactive daily trigger — pulls the user back every day */}
       {!loading && <DailyTriggerBanner trigger={trigger} />}
 
-      {/* Rotating daily insight chip */}
-      {!loading && <RotatingInsight text={rotatingInsight} />}
+      {/* Coach del día — insight protagonista, generado dinámicamente */}
+      {!loading && topInsight && <CoachCard insight={topInsight} greeting={greeting} />}
 
       {/* End-of-day closure (yesterday) */}
       {!loading && closure && <ClosureCard data={closure} />}
@@ -282,6 +286,9 @@ export default function Index() {
 
       {/* Weekly summary — habit-builder loop */}
       {!loading && weekly.hasData && <WeeklySummary data={weekly} />}
+
+      {/* Patterns detected by the coach */}
+      {!loading && patterns.length > 0 && <PatternsCard patterns={patterns} />}
 
       {/* Monthly breakdown by category */}
       {breakdown.monthTotal > 0 && (
