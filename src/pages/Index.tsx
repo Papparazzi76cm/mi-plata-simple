@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import { formatGs } from "@/lib/format";
 import {
   averageDailyExpense,
@@ -50,6 +51,8 @@ interface Reminder {
 
 export default function Index() {
   const { user } = useAuth();
+  const { isPro } = useSubscription();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [allTx, setAllTx] = useState<TxLite[]>([]);
   const [recent, setRecent] = useState<Transaction[]>([]);
   const [nextReminder, setNextReminder] = useState<Reminder | null>(null);
@@ -58,6 +61,19 @@ export default function Index() {
   const [allReminders, setAllReminders] = useState<ReminderLite[]>([]);
   const [loading, setLoading] = useState(true);
   const toastFiredRef = useRef(false);
+
+  // Toast de éxito al volver del checkout
+  useEffect(() => {
+    if (searchParams.get("checkout") === "success") {
+      toast.success("¡Bienvenido a Mi Plata PRO! 👑", {
+        description: "Tu suscripción se está activando. Aparecerá en segundos.",
+        duration: 6000,
+      });
+      const next = new URLSearchParams(searchParams);
+      next.delete("checkout");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!user) return;
@@ -302,7 +318,7 @@ export default function Index() {
       {!loading && closure && <ClosureCard data={closure} />}
 
       {/* LIVE BALANCE — protagonista */}
-      {!loading && <LiveBalanceCard balance={liveBalance} todayTotal={todayTotal} savings={savings} categoryAlerts={categoryAlerts} />}
+      {!loading && <LiveBalanceCard balance={liveBalance} todayTotal={todayTotal} savings={savings} categoryAlerts={categoryAlerts} isPro={isPro} />}
 
       {/* Vista semanal real */}
       {!loading && <WeekLiveCard data={weekLive} />}
