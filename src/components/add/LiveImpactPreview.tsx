@@ -69,7 +69,9 @@ export function LiveImpactPreview({ amount, description, type }: Props) {
       const budget: MonthlyBudget | null = budRes.data
         ? {
             total_amount: Number(budRes.data.total_amount ?? 0),
-            fixed_expenses: (budRes.data.fixed_expenses as MonthlyBudget["fixed_expenses"]) ?? [],
+            fixed_expenses: Array.isArray(budRes.data.fixed_expenses)
+              ? (budRes.data.fixed_expenses as unknown as MonthlyBudget["fixed_expenses"])
+              : [],
             savings_goal: Number(budRes.data.savings_goal ?? 0),
           }
         : null;
@@ -190,7 +192,7 @@ export function LiveImpactPreview({ amount, description, type }: Props) {
               className={cn(
                 "flex items-center gap-3 px-4 py-2.5 text-sm",
                 l.tone === "bad" && "text-destructive",
-                l.tone === "warn" && "text-amber-600 dark:text-amber-500",
+                l.tone === "warn" && "text-warning",
                 l.tone === "good" && "text-foreground",
               )}
             >
