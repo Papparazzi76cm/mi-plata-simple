@@ -119,15 +119,56 @@ export default function Settings() {
       </Link>
 
       <ul className="bg-card rounded-3xl shadow-soft overflow-hidden divide-y divide-border mb-5">
-        <li className="flex items-center gap-4 px-5 py-4">
-          <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-accent-foreground">
-            <DollarSign className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <p className="font-medium">Moneda</p>
-            <p className="text-xs text-muted-foreground">Guaraní paraguayo</p>
-          </div>
-          <span className="text-sm font-semibold text-primary">Gs</span>
+        <li>
+          <Drawer open={countryOpen} onOpenChange={setCountryOpen}>
+            <DrawerTrigger asChild>
+              <button className="w-full flex items-center gap-4 px-5 py-4 active:bg-muted transition-colors text-left">
+                <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-accent-foreground">
+                  <Globe className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium">País y moneda</p>
+                  <p className="text-xs text-muted-foreground">
+                    {country.flag} {country.name} · {country.currency}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </DrawerTrigger>
+            <DrawerContent className="max-h-[85vh]">
+              <DrawerHeader>
+                <DrawerTitle>Elegí tu país</DrawerTitle>
+              </DrawerHeader>
+              <ul className="overflow-y-auto px-2 pb-6">
+                {countries.map((c) => {
+                  const selected = c.code === country.code;
+                  return (
+                    <li key={c.code}>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await setCountry(c.code);
+                          setCountryOpen(false);
+                          toast.success(`Moneda: ${c.currency}`);
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-4 py-3 rounded-2xl active:bg-muted transition-colors text-left",
+                          selected && "bg-primary/5",
+                        )}
+                      >
+                        <span className="text-2xl leading-none">{c.flag}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{c.name}</p>
+                          <p className="text-[11px] text-muted-foreground">{c.currency}</p>
+                        </div>
+                        {selected && <Check className="h-4 w-4 text-primary shrink-0" />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </DrawerContent>
+          </Drawer>
         </li>
         <li>
           <Link
