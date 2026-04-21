@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { Wallet, ArrowRight, TrendingUp } from "lucide-react";
+import { Wallet, ArrowRight, TrendingUp, PiggyBank, AlertTriangle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatGs } from "@/lib/format";
-import type { LiveBalance } from "@/lib/balance";
+import type { LiveBalance, SavingsProgress } from "@/lib/balance";
+import type { Category } from "@/lib/categories";
 
 const statusStyles: Record<LiveBalance["status"], string> = {
   healthy: "gradient-card text-primary-foreground",
@@ -18,12 +19,29 @@ const statusLabel: Record<LiveBalance["status"], string> = {
   over: "Excediste el presupuesto",
 };
 
+const savingsCopy: Record<SavingsProgress["status"], { label: string; emoji: string }> = {
+  none: { label: "", emoji: "" },
+  behind: { label: "Vas justo con la meta", emoji: "🐢" },
+  onTrack: { label: "Vas en ritmo", emoji: "✅" },
+  ahead: { label: "Vas adelantado", emoji: "🚀" },
+  reached: { label: "¡Meta cumplida!", emoji: "🎉" },
+};
+
+interface CategoryAlert {
+  cat: Category;
+  pct: number;
+  spent: number;
+  limit: number;
+}
+
 interface Props {
   balance: LiveBalance;
   todayTotal: number;
+  savings: SavingsProgress;
+  categoryAlerts: CategoryAlert[];
 }
 
-export function LiveBalanceCard({ balance, todayTotal }: Props) {
+export function LiveBalanceCard({ balance, todayTotal, savings, categoryAlerts }: Props) {
   // Sin presupuesto configurado → CTA suave
   if (!balance.hasBudget) {
     return (
@@ -51,13 +69,6 @@ export function LiveBalanceCard({ balance, todayTotal }: Props) {
   }
 
   const isOver = balance.status === "over";
-  const isProjOver =
-    balance.hasBudget && balance.projection > 0 && balance.projection > (balance.spent + balance.available + balance.fixedPending) * 0; // we use percentage instead
-  const projectionPct =
-    balance.hasBudget && balance.projection > 0
-      ? Math.round((balance.projection / (balance.spent + balance.available + balance.fixedPending || 1)) * 100)
-      : 0;
-  // Simpler projection comparison: vs total budget
   const totalBudget = balance.spent + balance.available + balance.fixedPending;
   const projVsBudgetPct = totalBudget > 0 ? Math.round((balance.projection / totalBudget) * 100) : 0;
 
@@ -141,6 +152,87 @@ export function LiveBalanceCard({ balance, todayTotal }: Props) {
         <p className="mt-2 text-[11px] font-semibold leading-snug">
           ⚠️ A este ritmo cerrás {projVsBudgetPct - 100}% sobre tu presupuesto
         </p>
+      )}
+
+      {/* META DE AHORRO */}
+      {savings.hasGoal && (
+        <div className="mt-5 pt-5 border-t border-current/20">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-[11px] uppercase tracking-wider opacity-85 font-semibold flex items-center gap-1.5">
+              <PiggyBank className="h-3.5 w-3.5" />
+              Meta de ahorro
+            </p>
+            <span className="text-[11px] font-semibold opacity-90">
+              {savingsCopy[savings.status].emoji} {savingsCopy[savings.status].label}
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between text-sm mb-1.5 tabular-nums">
+            <span className="font-bold">{formatGs(savings.current)}</span>
+            <span className="opacity-80 text-xs">de {formatGs(savings.goal)}</span>
+          </div>
+          <div className="h-2 rounded-full bg-white/25 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-white/90 transition-all"
+              style={{ width: `${Math.min(100, savings.percent)}%` }}
+            />
+          </div>
+          <div className="mt-1.5 flex items-center justify-between text-[11px] opacity-80 tabular-nums">
+            <span>{savings.percent}% logrado</span>
+            {savings.projection > 0 && savings.status !== "reached" && (
+              <span className="flex items-center gap-0.5">
+                <Sparkles className="h-2.5 w-2.5" />
+                Proyección: {formatGs(savings.projection)}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!savings.hasGoal && (
+        <Link
+          to="/presupuesto-mensual"
+          className="mt-4 flex items-center justify-between gap-2 text-[11px] font-medium opacity-85 hover:opacity-100 bg-white/15 rounded-xl px-3 py-2 transition"
+        >
+          <span className="flex items-center gap-1.5">
+            <PiggyBank className="h-3.5 w-3.5" />
+            Fijate una meta de ahorro
+          </span>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      )}
+
+      {/* CATEGORÍAS CERCA DEL LÍMITE */}
+      {categoryAlerts.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-current/20">
+          <p className="text-[11px] uppercase tracking-wider opacity-85 font-semibold flex items-center gap-1.5 mb-2">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            Cerca del límite
+          </p>
+          <ul className="space-y-2">
+            {categoryAlerts.map(({ cat, pct, spent, limit }) => (
+              <li key={cat.id}>
+                <Link
+                  to={`/category/${cat.id}`}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <span className="text-base leading-none">{cat.emoji}</span>
+                  <span className="flex-1 truncate font-medium">{cat.label}</span>
+                  <span className="tabular-nums opacity-90">
+                    {formatGs(spent)} / {formatGs(limit)}
+                  </span>
+                  <span
+                    className={cn(
+                      "tabular-nums font-bold px-1.5 py-0.5 rounded-md text-[10px]",
+                      pct >= 100 ? "bg-white text-destructive" : "bg-white/25",
+                    )}
+                  >
+                    {pct}%
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </section>
   );

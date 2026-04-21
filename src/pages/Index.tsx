@@ -258,7 +258,7 @@ export default function Index() {
       {!loading && closure && <ClosureCard data={closure} />}
 
       {/* LIVE BALANCE — protagonista */}
-      {!loading && <LiveBalanceCard balance={liveBalance} todayTotal={todayTotal} />}
+      {!loading && <LiveBalanceCard balance={liveBalance} todayTotal={todayTotal} savings={savings} categoryAlerts={categoryAlerts} />}
 
       {/* Vista semanal real */}
       {!loading && <WeekLiveCard data={weekLive} />}
