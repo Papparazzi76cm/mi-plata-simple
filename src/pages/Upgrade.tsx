@@ -1,6 +1,17 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Crown, Check, Sparkles, ArrowLeft, Loader2, X } from "lucide-react";
+import { Crown, Check, Sparkles, ArrowLeft, Loader2, X, ShieldCheck, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useSubscription } from "@/hooks/useSubscription";
 import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
 import { PRO_PRICE_ID } from "@/lib/paddle";
@@ -23,6 +34,14 @@ const FEATURES_FREE = [
 export default function Upgrade() {
   const { isPro, state, subscription, loading } = useSubscription();
   const { openCheckout, loading: checkoutLoading } = usePaddleCheckout();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const isReactivation = state === "expired" || state === "past_due";
+
+  const handleConfirm = async () => {
+    setConfirmOpen(false);
+    await openCheckout(PRO_PRICE_ID);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-12">
@@ -114,7 +133,7 @@ export default function Upgrade() {
           </ul>
 
           <Button
-            onClick={() => openCheckout(PRO_PRICE_ID)}
+            onClick={() => setConfirmOpen(true)}
             disabled={checkoutLoading || (isPro && state !== "expired")}
             className={cn(
               "w-full h-12 rounded-2xl text-base font-bold gradient-primary text-primary-foreground hover:opacity-90 transition",
@@ -125,7 +144,7 @@ export default function Upgrade() {
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : isPro && state !== "expired" ? (
               "Ya tenés PRO"
-            ) : state === "expired" || state === "past_due" ? (
+            ) : isReactivation ? (
               "Reactivar PRO"
             ) : (
               "Hacerme PRO"
@@ -161,6 +180,51 @@ export default function Upgrade() {
           Pago procesado de forma segura por Paddle (nuestro proveedor). Recibirás factura por email.
         </p>
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent className="rounded-3xl max-w-sm">
+          <AlertDialogHeader>
+            <div className="mx-auto h-14 w-14 rounded-2xl gradient-primary text-primary-foreground flex items-center justify-center mb-2 shadow-card">
+              <Crown className="h-7 w-7" />
+            </div>
+            <AlertDialogTitle className="text-center text-xl">
+              {isReactivation ? "Reactivar Mi Plata PRO" : "Confirmá tu suscripción PRO"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-sm">
+              Vas a abrir el checkout seguro para suscribirte por{" "}
+              <span className="font-bold text-foreground">$2,99/mes</span>. Cancelás cuando quieras.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <ul className="space-y-2.5 my-2">
+            {FEATURES_PRO.map((f) => (
+              <li key={f.title} className="flex gap-2.5 items-start">
+                <span className="text-lg leading-none mt-0.5">{f.icon}</span>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">{f.title}</p>
+                  <p className="text-xs text-muted-foreground leading-snug">{f.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/50 rounded-xl p-2.5">
+            <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+            <span>Pago procesado por Paddle. Te enviamos factura por email.</span>
+          </div>
+
+          <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2 mt-2">
+            <AlertDialogCancel className="rounded-2xl h-11 mt-0">Mejor no</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirm}
+              className="rounded-2xl h-11 gradient-primary text-primary-foreground font-bold hover:opacity-90"
+            >
+              <CreditCard className="h-4 w-4 mr-1.5" />
+              Abrir checkout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
