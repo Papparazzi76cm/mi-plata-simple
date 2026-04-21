@@ -133,6 +133,7 @@ export type Database = {
           created_at: string
           fixed_expenses: Json
           id: string
+          savings_goal: number
           total_amount: number
           updated_at: string
           user_id: string
@@ -141,6 +142,7 @@ export type Database = {
           created_at?: string
           fixed_expenses?: Json
           id?: string
+          savings_goal?: number
           total_amount?: number
           updated_at?: string
           user_id: string
@@ -149,6 +151,7 @@ export type Database = {
           created_at?: string
           fixed_expenses?: Json
           id?: string
+          savings_goal?: number
           total_amount?: number
           updated_at?: string
           user_id?: string
