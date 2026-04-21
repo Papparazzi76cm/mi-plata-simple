@@ -53,13 +53,6 @@ export default function Index() {
   const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [monthlyBudget, setMonthlyBudget] = useState<MonthlyBudget | null>(null);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  const [allTx, setAllTx] = useState<TxLite[]>([]);
-  const [recent, setRecent] = useState<Transaction[]>([]);
-  const [nextReminder, setNextReminder] = useState<Reminder | null>(null);
-  const [budgets, setBudgets] = useState<Record<string, number>>({});
-  const [monthlyBudget, setMonthlyBudget] = useState<MonthlyBudget | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
