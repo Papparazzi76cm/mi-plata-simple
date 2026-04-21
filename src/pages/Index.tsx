@@ -20,7 +20,7 @@ import { generateCoachInsights, detectPatterns, greetingByHour } from "@/lib/coa
 import { calcLiveBalance, calcWeekLive, calcSavings, type MonthlyBudget, type FixedExpense } from "@/lib/balance";
 import { ArrowDownLeft, ArrowUpRight, Bell, Flame, Receipt, PieChart } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { matchCategory, type Category } from "@/lib/categories";
+import { matchCategory, CATEGORIES, type Category } from "@/lib/categories";
 import { DailyTriggerBanner } from "@/components/home/DailyTriggerBanner";
 import { ClosureCard } from "@/components/home/ClosureCard";
 import { CoachCard } from "@/components/home/CoachCard";
@@ -210,9 +210,7 @@ export default function Index() {
       const spent = totals.get(catId) ?? 0;
       const pct = Math.round((spent / limit) * 100);
       if (pct < 80) continue;
-      const cat = (
-        require("@/lib/categories") as { CATEGORIES: Category[] }
-      ).CATEGORIES.find((c) => c.id === catId);
+      const cat = CATEGORIES.find((c) => c.id === catId);
       if (cat) items.push({ cat, pct, spent, limit });
     }
     return items.sort((a, b) => b.pct - a.pct).slice(0, 2);
