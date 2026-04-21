@@ -17,6 +17,7 @@ import {
   type TxLite,
 } from "@/lib/insights";
 import { generateCoachInsights, detectPatterns, greetingByHour } from "@/lib/coach";
+import { calcLiveBalance, calcWeekLive, type MonthlyBudget, type FixedExpense } from "@/lib/balance";
 import { ArrowDownLeft, ArrowUpRight, Bell, Flame, Receipt, PieChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { matchCategory, type Category } from "@/lib/categories";
@@ -25,6 +26,8 @@ import { ClosureCard } from "@/components/home/ClosureCard";
 import { CoachCard } from "@/components/home/CoachCard";
 import { PatternsCard } from "@/components/home/PatternsCard";
 import { WeeklySummary } from "@/components/home/WeeklySummary";
+import { LiveBalanceCard } from "@/components/home/LiveBalanceCard";
+import { WeekLiveCard } from "@/components/home/WeekLiveCard";
 import { celebrateStreakIfMilestone } from "@/lib/celebrate";
 
 interface Transaction {
@@ -55,6 +58,7 @@ export default function Index() {
   const [recent, setRecent] = useState<Transaction[]>([]);
   const [nextReminder, setNextReminder] = useState<Reminder | null>(null);
   const [budgets, setBudgets] = useState<Record<string, number>>({});
+  const [monthlyBudget, setMonthlyBudget] = useState<MonthlyBudget | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -65,7 +69,7 @@ export default function Index() {
       const since = new Date();
       since.setDate(since.getDate() - 30);
 
-      const [recentRes, windowRes, remRes, budgetsRes] = await Promise.all([
+      const [recentRes, windowRes, remRes, budgetsRes, mBudgetRes] = await Promise.all([
         supabase
           .from("transactions")
           .select("id,type,amount,description,date")
@@ -82,6 +86,11 @@ export default function Index() {
           .order("due_date", { ascending: true })
           .limit(1),
         supabase.from("budgets").select("category_id,amount"),
+        supabase
+          .from("monthly_budget")
+          .select("total_amount,fixed_expenses")
+          .eq("user_id", user.id)
+          .maybeSingle(),
       ]);
 
       if (!mounted) return;
@@ -93,6 +102,15 @@ export default function Index() {
         bMap[b.category_id] = Number(b.amount);
       }
       setBudgets(bMap);
+      if (mBudgetRes.data) {
+        const fx = mBudgetRes.data.fixed_expenses as unknown as FixedExpense[];
+        setMonthlyBudget({
+          total_amount: Number(mBudgetRes.data.total_amount),
+          fixed_expenses: Array.isArray(fx) ? fx : [],
+        });
+      } else {
+        setMonthlyBudget(null);
+      }
       setLoading(false);
     }
 
