@@ -17,6 +17,7 @@ import {
   type TxLite,
 } from "@/lib/insights";
 import { generateCoachInsights, detectPatterns, greetingByHour } from "@/lib/coach";
+import { calcLiveBalance, calcWeekLive, type MonthlyBudget, type FixedExpense } from "@/lib/balance";
 import { ArrowDownLeft, ArrowUpRight, Bell, Flame, Receipt, PieChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { matchCategory, type Category } from "@/lib/categories";
@@ -25,6 +26,8 @@ import { ClosureCard } from "@/components/home/ClosureCard";
 import { CoachCard } from "@/components/home/CoachCard";
 import { PatternsCard } from "@/components/home/PatternsCard";
 import { WeeklySummary } from "@/components/home/WeeklySummary";
+import { LiveBalanceCard } from "@/components/home/LiveBalanceCard";
+import { WeekLiveCard } from "@/components/home/WeekLiveCard";
 import { celebrateStreakIfMilestone } from "@/lib/celebrate";
 
 interface Transaction {
@@ -42,19 +45,13 @@ interface Reminder {
   amount: number | null;
 }
 
-const moodStyles: Record<string, string> = {
-  good: "gradient-card text-primary-foreground",
-  warn: "bg-warn text-warn-foreground",
-  bad: "bg-destructive text-destructive-foreground",
-  neutral: "gradient-card text-primary-foreground",
-};
-
 export default function Index() {
   const { user } = useAuth();
   const [allTx, setAllTx] = useState<TxLite[]>([]);
   const [recent, setRecent] = useState<Transaction[]>([]);
   const [nextReminder, setNextReminder] = useState<Reminder | null>(null);
   const [budgets, setBudgets] = useState<Record<string, number>>({});
+  const [monthlyBudget, setMonthlyBudget] = useState<MonthlyBudget | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -65,7 +62,7 @@ export default function Index() {
       const since = new Date();
       since.setDate(since.getDate() - 30);
 
-      const [recentRes, windowRes, remRes, budgetsRes] = await Promise.all([
+      const [recentRes, windowRes, remRes, budgetsRes, mBudgetRes] = await Promise.all([
         supabase
           .from("transactions")
           .select("id,type,amount,description,date")
@@ -82,6 +79,11 @@ export default function Index() {
           .order("due_date", { ascending: true })
           .limit(1),
         supabase.from("budgets").select("category_id,amount"),
+        supabase
+          .from("monthly_budget")
+          .select("total_amount,fixed_expenses")
+          .eq("user_id", user.id)
+          .maybeSingle(),
       ]);
 
       if (!mounted) return;
@@ -93,6 +95,15 @@ export default function Index() {
         bMap[b.category_id] = Number(b.amount);
       }
       setBudgets(bMap);
+      if (mBudgetRes.data) {
+        const fx = mBudgetRes.data.fixed_expenses as unknown as FixedExpense[];
+        setMonthlyBudget({
+          total_amount: Number(mBudgetRes.data.total_amount),
+          fixed_expenses: Array.isArray(fx) ? fx : [],
+        });
+      } else {
+        setMonthlyBudget(null);
+      }
       setLoading(false);
     }
 
@@ -167,6 +178,15 @@ export default function Index() {
     [allTx],
   );
 
+  const liveBalance = useMemo(
+    () => calcLiveBalance(allTx, monthlyBudget),
+    [allTx, monthlyBudget],
+  );
+  const weekLive = useMemo(
+    () => calcWeekLive(allTx, liveBalance.dailyAllowance),
+    [allTx, liveBalance.dailyAllowance],
+  );
+
   // Subtle confetti when the user hits a streak milestone (3/7/14/30),
   // once per milestone per day. Only after the first data load.
   useEffect(() => {
@@ -208,27 +228,23 @@ export default function Index() {
       {/* End-of-day closure (yesterday) */}
       {!loading && closure && <ClosureCard data={closure} />}
 
-      {/* Smart summary card */}
-      <section
-        className={cn(
-          "rounded-3xl p-6 shadow-card animate-slide-up",
-          moodStyles[status.mood] ?? moodStyles.neutral,
-        )}
-      >
-        <p className="text-sm/none opacity-80 font-medium">💰 Hoy gastaste</p>
-        <p className="text-4xl font-bold mt-2 tracking-tight tabular-nums">{formatGs(todayTotal)}</p>
+      {/* LIVE BALANCE — protagonista */}
+      {!loading && <LiveBalanceCard balance={liveBalance} todayTotal={todayTotal} />}
 
-        <div className="mt-5 pt-5 border-t border-current/20 grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <p className="opacity-75 text-xs">📊 Promedio diario</p>
-            <p className="font-semibold mt-1 tabular-nums">{formatGs(avg)}</p>
-          </div>
-          <div>
-            <p className="opacity-75 text-xs">🎯 Vs ayer</p>
-            <p className="font-semibold mt-1">
-              {compare.label} {compare.emoji}
-            </p>
-          </div>
+      {/* Vista semanal real */}
+      {!loading && <WeekLiveCard data={weekLive} />}
+
+      {/* Hoy en detalle (mini) — promedio + comparación con ayer */}
+      <section className="bg-card rounded-2xl p-4 shadow-soft grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">📊 Promedio diario</p>
+          <p className="font-semibold mt-1 tabular-nums">{formatGs(avg)}</p>
+        </div>
+        <div>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">🎯 Vs ayer</p>
+          <p className="font-semibold mt-1 text-sm">
+            {compare.label} {compare.emoji}
+          </p>
         </div>
       </section>
 
