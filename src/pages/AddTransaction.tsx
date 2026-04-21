@@ -17,6 +17,7 @@ import {
   topUsedCategories,
   type Category,
 } from "@/lib/categories";
+import { LiveImpactPreview } from "@/components/add/LiveImpactPreview";
 
 const USAGE_KEY = "miplata.cat-usage.v1";
 const LAST_CAT_KEY = "miplata.last-cat.v1";
