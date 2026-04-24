@@ -83,8 +83,17 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const setCountry = useCallback(
-    async (code: string) => {
+    async (code: string, opts?: SetCountryOptions): Promise<ConversionResult | null> => {
+      const prev = getCurrentCountry();
       const next = findCountry(code);
+      const currencyChanged = prev.currency !== next.currency;
+
+      let conversion: ConversionResult | null = null;
+      if (opts?.convert && currencyChanged && user) {
+        // Convertimos ANTES de cambiar la moneda activa para no romper la UI.
+        conversion = await convertAllUserAmounts(user.id, prev.currency, next.currency);
+      }
+
       setCurrentCountry(next);
       if (user) {
         await supabase
@@ -94,6 +103,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
             { onConflict: "user_id" },
           );
       }
+      return conversion;
     },
     [user],
   );
