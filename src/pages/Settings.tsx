@@ -151,9 +151,24 @@ export default function Settings() {
                       <button
                         type="button"
                         onClick={async () => {
-                          await setCountry(c.code);
+                          if (c.currency === country.currency) {
+                            // Misma moneda → solo guardamos preferencia (cambio cosmético: locale).
+                            await setCountry(c.code);
+                            setCountryOpen(false);
+                            toast.success(`País: ${c.name}`);
+                            return;
+                          }
+                          // Cambio de moneda → pedimos tasa y abrimos confirmación.
+                          setPendingCountryCode(c.code);
+                          setPendingRate(null);
                           setCountryOpen(false);
-                          toast.success(`Moneda: ${c.currency}`);
+                          try {
+                            const rate = await fetchFxRate(country.currency, c.currency);
+                            setPendingRate(rate);
+                          } catch {
+                            toast.error("No se pudo obtener el tipo de cambio");
+                            setPendingCountryCode(null);
+                          }
                         }}
                         className={cn(
                           "w-full flex items-center gap-3 px-4 py-3 rounded-2xl active:bg-muted transition-colors text-left",
