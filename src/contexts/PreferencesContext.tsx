@@ -17,11 +17,17 @@ import {
   type CountryInfo,
 } from "@/lib/locales";
 import { getCurrentCountry, setCurrentCountry, subscribe } from "@/lib/currencyStore";
+import { convertAllUserAmounts, type ConversionResult } from "@/lib/fx";
+
+interface SetCountryOptions {
+  /** Si true, convierte todos los montos guardados al cambiar de moneda. Default: false. */
+  convert?: boolean;
+}
 
 interface PreferencesContextValue {
   country: CountryInfo;
   countries: CountryInfo[];
-  setCountry: (code: string) => Promise<void>;
+  setCountry: (code: string, opts?: SetCountryOptions) => Promise<ConversionResult | null>;
   loading: boolean;
 }
 
