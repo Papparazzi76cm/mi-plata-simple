@@ -26,12 +26,16 @@ import {
 } from "@/components/ui/drawer";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { fetchFxRate } from "@/lib/fx";
 
 export default function Settings() {
   const { user, signOut } = useAuth();
   const { isPro, state, subscription } = useSubscription();
   const { country, countries, setCountry } = usePreferences();
   const [countryOpen, setCountryOpen] = useState(false);
+  const [pendingCountryCode, setPendingCountryCode] = useState<string | null>(null);
+  const [pendingRate, setPendingRate] = useState<number | null>(null);
+  const [converting, setConverting] = useState(false);
 
   async function handleExport() {
     const [tx, rem] = await Promise.all([
