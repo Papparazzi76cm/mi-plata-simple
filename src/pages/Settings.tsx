@@ -288,6 +288,92 @@ export default function Settings() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Confirmación de conversión de moneda */}
+      <AlertDialog
+        open={pendingCountryCode !== null}
+        onOpenChange={(open) => {
+          if (!open && !converting) {
+            setPendingCountryCode(null);
+            setPendingRate(null);
+          }
+        }}
+      >
+        <AlertDialogContent className="rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cambiar moneda y convertir tus datos</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm">
+                <p>
+                  Vas a cambiar de <strong>{country.currency}</strong> a{" "}
+                  <strong>
+                    {pendingCountryCode
+                      ? countries.find((c) => c.code === pendingCountryCode)?.currency
+                      : ""}
+                  </strong>
+                  . Vamos a convertir <strong>todos tus movimientos, presupuesto, meta de ahorro
+                  y límites por categoría</strong> usando el tipo de cambio del día.
+                </p>
+                {pendingRate !== null && pendingCountryCode && (
+                  <div className="bg-muted/60 rounded-xl px-3 py-2 text-xs">
+                    <p className="font-semibold text-foreground">Tipo de cambio</p>
+                    <p className="tabular-nums mt-0.5">
+                      1 {country.currency} ={" "}
+                      {pendingRate.toLocaleString(undefined, {
+                        maximumFractionDigits: 6,
+                      })}{" "}
+                      {countries.find((c) => c.code === pendingCountryCode)?.currency}
+                    </p>
+                    <p className="text-muted-foreground mt-1">Fuente: exchangerate.host</p>
+                  </div>
+                )}
+                {pendingRate === null && (
+                  <p className="text-muted-foreground text-xs">Obteniendo tipo de cambio…</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Por redondeo pueden quedar pequeñas diferencias. La acción no se puede deshacer
+                  automáticamente (podés volver a cambiar de moneda más tarde).
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl" disabled={converting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={pendingRate === null || converting}
+              className="rounded-xl"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!pendingCountryCode) return;
+                setConverting(true);
+                try {
+                  const result = await setCountry(pendingCountryCode, { convert: true });
+                  if (result) {
+                    toast.success(
+                      `Convertido: ${result.updated.transactions} movimientos, ${result.updated.budgets} límites${
+                        result.updated.monthlyBudget ? " y presupuesto del mes" : ""
+                      }.`,
+                    );
+                  } else {
+                    toast.success("Moneda actualizada");
+                  }
+                  setPendingCountryCode(null);
+                  setPendingRate(null);
+                } catch (err) {
+                  console.error(err);
+                  toast.error("No se pudo convertir tus datos");
+                } finally {
+                  setConverting(false);
+                }
+              }}
+            >
+              {converting ? "Convirtiendo…" : "Convertir y cambiar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <p className="text-center text-xs text-muted-foreground mt-8">Mi Plata · v1.0</p>
     </div>
   );
