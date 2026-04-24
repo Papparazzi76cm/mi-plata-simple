@@ -26,12 +26,16 @@ import {
 } from "@/components/ui/drawer";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { fetchFxRate } from "@/lib/fx";
 
 export default function Settings() {
   const { user, signOut } = useAuth();
   const { isPro, state, subscription } = useSubscription();
   const { country, countries, setCountry } = usePreferences();
   const [countryOpen, setCountryOpen] = useState(false);
+  const [pendingCountryCode, setPendingCountryCode] = useState<string | null>(null);
+  const [pendingRate, setPendingRate] = useState<number | null>(null);
+  const [converting, setConverting] = useState(false);
 
   async function handleExport() {
     const [tx, rem] = await Promise.all([
@@ -147,9 +151,24 @@ export default function Settings() {
                       <button
                         type="button"
                         onClick={async () => {
-                          await setCountry(c.code);
+                          if (c.currency === country.currency) {
+                            // Misma moneda → solo guardamos preferencia (cambio cosmético: locale).
+                            await setCountry(c.code);
+                            setCountryOpen(false);
+                            toast.success(`País: ${c.name}`);
+                            return;
+                          }
+                          // Cambio de moneda → pedimos tasa y abrimos confirmación.
+                          setPendingCountryCode(c.code);
+                          setPendingRate(null);
                           setCountryOpen(false);
-                          toast.success(`Moneda: ${c.currency}`);
+                          try {
+                            const rate = await fetchFxRate(country.currency, c.currency);
+                            setPendingRate(rate);
+                          } catch {
+                            toast.error("No se pudo obtener el tipo de cambio");
+                            setPendingCountryCode(null);
+                          }
                         }}
                         className={cn(
                           "w-full flex items-center gap-3 px-4 py-3 rounded-2xl active:bg-muted transition-colors text-left",
@@ -264,6 +283,92 @@ export default function Settings() {
               className="rounded-xl bg-destructive hover:bg-destructive/90"
             >
               Sí, eliminar todo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmación de conversión de moneda */}
+      <AlertDialog
+        open={pendingCountryCode !== null}
+        onOpenChange={(open) => {
+          if (!open && !converting) {
+            setPendingCountryCode(null);
+            setPendingRate(null);
+          }
+        }}
+      >
+        <AlertDialogContent className="rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cambiar moneda y convertir tus datos</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm">
+                <p>
+                  Vas a cambiar de <strong>{country.currency}</strong> a{" "}
+                  <strong>
+                    {pendingCountryCode
+                      ? countries.find((c) => c.code === pendingCountryCode)?.currency
+                      : ""}
+                  </strong>
+                  . Vamos a convertir <strong>todos tus movimientos, presupuesto, meta de ahorro
+                  y límites por categoría</strong> usando el tipo de cambio del día.
+                </p>
+                {pendingRate !== null && pendingCountryCode && (
+                  <div className="bg-muted/60 rounded-xl px-3 py-2 text-xs">
+                    <p className="font-semibold text-foreground">Tipo de cambio</p>
+                    <p className="tabular-nums mt-0.5">
+                      1 {country.currency} ={" "}
+                      {pendingRate.toLocaleString(undefined, {
+                        maximumFractionDigits: 6,
+                      })}{" "}
+                      {countries.find((c) => c.code === pendingCountryCode)?.currency}
+                    </p>
+                    <p className="text-muted-foreground mt-1">Fuente: exchangerate.host</p>
+                  </div>
+                )}
+                {pendingRate === null && (
+                  <p className="text-muted-foreground text-xs">Obteniendo tipo de cambio…</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Por redondeo pueden quedar pequeñas diferencias. La acción no se puede deshacer
+                  automáticamente (podés volver a cambiar de moneda más tarde).
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl" disabled={converting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={pendingRate === null || converting}
+              className="rounded-xl"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!pendingCountryCode) return;
+                setConverting(true);
+                try {
+                  const result = await setCountry(pendingCountryCode, { convert: true });
+                  if (result) {
+                    toast.success(
+                      `Convertido: ${result.updated.transactions} movimientos, ${result.updated.budgets} límites${
+                        result.updated.monthlyBudget ? " y presupuesto del mes" : ""
+                      }.`,
+                    );
+                  } else {
+                    toast.success("Moneda actualizada");
+                  }
+                  setPendingCountryCode(null);
+                  setPendingRate(null);
+                } catch (err) {
+                  console.error(err);
+                  toast.error("No se pudo convertir tus datos");
+                } finally {
+                  setConverting(false);
+                }
+              }}
+            >
+              {converting ? "Convirtiendo…" : "Convertir y cambiar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

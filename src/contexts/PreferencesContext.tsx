@@ -17,11 +17,17 @@ import {
   type CountryInfo,
 } from "@/lib/locales";
 import { getCurrentCountry, setCurrentCountry, subscribe } from "@/lib/currencyStore";
+import { convertAllUserAmounts, type ConversionResult } from "@/lib/fx";
+
+interface SetCountryOptions {
+  /** Si true, convierte todos los montos guardados al cambiar de moneda. Default: false. */
+  convert?: boolean;
+}
 
 interface PreferencesContextValue {
   country: CountryInfo;
   countries: CountryInfo[];
-  setCountry: (code: string) => Promise<void>;
+  setCountry: (code: string, opts?: SetCountryOptions) => Promise<ConversionResult | null>;
   loading: boolean;
 }
 
@@ -77,8 +83,17 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const setCountry = useCallback(
-    async (code: string) => {
+    async (code: string, opts?: SetCountryOptions): Promise<ConversionResult | null> => {
+      const prev = getCurrentCountry();
       const next = findCountry(code);
+      const currencyChanged = prev.currency !== next.currency;
+
+      let conversion: ConversionResult | null = null;
+      if (opts?.convert && currencyChanged && user) {
+        // Convertimos ANTES de cambiar la moneda activa para no romper la UI.
+        conversion = await convertAllUserAmounts(user.id, prev.currency, next.currency);
+      }
+
       setCurrentCountry(next);
       if (user) {
         await supabase
@@ -88,6 +103,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
             { onConflict: "user_id" },
           );
       }
+      return conversion;
     },
     [user],
   );
